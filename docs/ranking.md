@@ -17,7 +17,7 @@ The Filters panel starts closed and retains its open/closed state when switching
 - Unknown type is shown only with All aircraft and Any engine count. Category or engine filtering hides it; search alone does not filter the separate Unknown section.
 - With a filter or search, the aircraft total sums all matching ranking rows, including those beyond the visible page. With neither, it shows the full snapshot total, including unidentified aircraft. Operator search follows the same total-count rule.
 
-Search keeps a stable width when result counts change. Result counts and snapshot age sit above the ranking. Reset filters reserves its space when inactive so appearing/disappearing does not move the table.
+Search keeps a stable width when result counts change. Result counts and snapshot age sit above the ranking. The timestamp aligns right beside the counts when space permits and left below them when it wraps, consistently in both views. Reset filters reserves its space when inactive so appearing/disappearing does not move the table.
 
 ### Search and pagination
 

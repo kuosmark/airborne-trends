@@ -12,9 +12,8 @@
 .ranking-status {
   display: flex;
   align-items: baseline;
-  justify-content: flex-end;
-  flex-shrink: 0;
-  gap: 6px 10px;
+  flex-wrap: wrap;
+  gap: 6px 12px;
   color: #626c76;
 }
 
@@ -118,12 +117,6 @@
   flex-wrap: wrap;
   gap: 4px 16px;
   margin-bottom: 12px;
-}
-.result-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 .reset-filters {
   min-height: 44px;
