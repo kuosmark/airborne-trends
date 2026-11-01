@@ -23,9 +23,11 @@ export class HistoryChartComponent implements OnDestroy {
   readonly days = signal<HistoryDay[]>([]);
   readonly generatedAt = signal('');
   readonly until = signal(Date.now());
+  private readonly now = signal(Date.now());
+  private clock?: ReturnType<typeof setInterval>;
   readonly since = computed(() => this.until() - this.period() * DAY_MS);
   readonly ticks = computed(() => historyTicks(this.since(), this.until(), this.period()));
-  readonly updatedAge = computed(() => formatSnapshotAge(this.generatedAt(), this.until()));
+  readonly updatedAge = computed(() => formatSnapshotAge(this.generatedAt(), this.now()));
   readonly availableSince = computed(() => {
     const first = this.points()[0]?.time;
     return first && first - this.since() > 22.5 * 60_000 ? first : null;
@@ -36,7 +38,7 @@ export class HistoryChartComponent implements OnDestroy {
     return Math.max(0, ...points.map(point => point.count));
   });
   readonly plot = computed(() => plotHistory(this.points(), this.since(), this.until(), this.referenceMaximum()));
-  readonly isDelayed = computed(() => !!this.generatedAt() && this.until() - Date.parse(this.generatedAt()) > 2 * 60 * 60_000);
+  readonly isDelayed = computed(() => !!this.generatedAt() && this.now() - Date.parse(this.generatedAt()) > 2 * 60 * 60_000);
   readonly hoveredIndex = signal<number | null>(null);
   readonly hoveredPoint = computed(() => {
     const index = this.hoveredIndex();
@@ -59,7 +61,11 @@ export class HistoryChartComponent implements OnDestroy {
   private abort?: AbortController;
   toggle(): void {
     this.isOpen.update(value => !value);
-    if (this.isOpen()) { void this.load(); }
+    clearInterval(this.clock);
+    if (this.isOpen()) {
+      this.clock = setInterval(() => { this.now.set(Date.now()); }, 60_000);
+      void this.load();
+    }
   }
   selectPeriod(days: number): void {
     if (this.period() === days) { return; }
@@ -73,7 +79,8 @@ export class HistoryChartComponent implements OnDestroy {
     this.abort = abort;
     this.isLoading.set(true);
     this.isError.set(false);
-    this.until.set(Date.now());
+    this.now.set(Date.now());
+    this.until.set(this.now());
     try {
       const result = await loadHistory(30, AbortSignal.any([abort.signal, AbortSignal.timeout(15_000)]), this.until());
       if (!abort.signal.aborted) { this.days.set(result.days); this.generatedAt.set(result.index.generatedAt); }
@@ -83,5 +90,8 @@ export class HistoryChartComponent implements OnDestroy {
       if (!abort.signal.aborted) { this.isLoading.set(false); }
     }
   }
-  ngOnDestroy(): void { this.abort?.abort(); }
+  ngOnDestroy(): void {
+    clearInterval(this.clock);
+    this.abort?.abort();
+  }
 }
