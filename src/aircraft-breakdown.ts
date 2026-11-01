@@ -6,7 +6,7 @@ import { DecimalPipe } from '@angular/common';
   standalone: true,
   imports: [DecimalPipe],
   templateUrl: './aircraft-breakdown.html',
-  styleUrl: './aircraft-breakdown.css',
+  styleUrls: ['./drawer-section.css', './aircraft-breakdown.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AircraftBreakdownComponent {

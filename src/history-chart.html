@@ -1,0 +1,76 @@
+<section class="history" [class.is-embedded]="isInDrawer()" [attr.aria-label]="name() + ' history'">
+  <button type="button" class="history-toggle" [class.drawer-section-title]="isInDrawer()" [class.drawer-section-toggle]="isInDrawer()" [attr.aria-expanded]="isOpen()" (click)="toggle()">
+    <span>Airborne history @if (!isInDrawer()) { <span class="history-name">{{ name() }}</span> }</span>
+    <span class="chevron" [class.is-open]="isOpen()" aria-hidden="true"></span>
+  </button>
+  @if (isOpen()) {
+    <div class="history-body">
+      <div class="periods" role="group" aria-label="History period">
+        <button type="button" [attr.aria-pressed]="period() === 1" (click)="selectPeriod(1)">24 hours</button>
+        <button type="button" [attr.aria-pressed]="period() === 7" (click)="selectPeriod(7)">7 days</button>
+        <button type="button" [attr.aria-pressed]="period() === 30" (click)="selectPeriod(30)">30 days</button>
+      </div>
+      @if (isLoading()) {
+        <p role="status">Loading history…</p>
+      } @else if (isError()) {
+        <p role="status">History is temporarily unavailable.</p>
+        <button class="retry" type="button" (click)="load()">Try again</button>
+      } @else if (points().length === 0) {
+        <p>No observations available for this period yet.</p>
+      } @else {
+        <div class="chart-surface history-surface">
+        <div class="plot" (pointerleave)="hoveredIndex.set(null)"><div class="y-axis" aria-hidden="true">@for (grid of plot().gridlines; track grid.value) {
+          <span [style.top.%]="grid.y / 210 * 100">{{ grid.value | number }}</span>
+        }</div>
+        <div class="chart-canvas">
+        <svg (pointermove)="selectObservation($event)" (pointerdown)="selectObservation($event)" viewBox="0 0 704 210" preserveAspectRatio="none" role="img" [attr.aria-label]="name() + ': ' + points().length + ' observations. Peak ' + plot().maximum + ' aircraft. Exact values are available below.'">
+          @for (grid of plot().gridlines; track grid.value) {
+            <line x1="0" [attr.y1]="grid.y" x2="704" [attr.y2]="grid.y" class="grid-line" />
+          }
+          <path [attr.d]="plot().path" class="series" />
+          @for (dot of plot().dots; track $index) {
+            @if (dot.isIsolated || hoveredIndex() === $index) {
+              <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="2" />
+            }
+          }
+        </svg>
+        @if (hoveredPoint(); as point) {
+          <div class="chart-tooltip" role="status"
+            [style.left.%]="point.left"
+            [style.top.px]="point.top"
+            [style.transform]="'translateX(-' + point.left + '%)'">
+            <strong>{{ point.count | number }} aircraft</strong>
+            <span>{{ point.time | date: 'd MMM, HH:mm OOOO' }}</span>
+          </div>
+        }
+        </div></div>
+        <div class="axis-labels" aria-hidden="true">
+          @for (tick of ticks(); track $index) {
+            <span class="axis-tick" [class.mobile-tick]="mobileTicks().includes(tick)" [style.left.%]="(tick - since()) / (until() - since()) * 100">
+              <span>{{ tick | date: (period() === 1 ? 'HH:mm' : 'd MMM') }}</span>
+            </span>
+          }
+        </div>
+        </div>
+        <p class="history-availability">
+          @if (availableSince(); as first) { Available since {{ first | date: 'd MMM' }} }
+        </p>
+        <div class="history-footer"><span>History updated {{ updatedAge() }}</span></div>
+        <details class="values"><summary>Data details</summary>
+        <p>Times in {{ timezone }} · refreshed hourly.</p>
+        <p>{{ points().length }} {{ points().length === 1 ? 'observation' : 'observations' }} · Gaps mean missing data.</p>
+
+          <div class="table-scroll"><table><caption>{{ name() }} · observed airborne aircraft</caption><thead><tr><th scope="col">Local time</th><th scope="col">Aircraft</th></tr></thead><tbody>
+          @for (point of points(); track point.time) {
+            <tr><td>{{ point.time | date: 'd MMM, HH:mm OOOO' }}</td><td>{{ point.count | number }}</td></tr>
+          }
+          </tbody></table></div>
+        </details>
+      }
+      @if (generatedAt() && !isError() && !isLoading()) {
+
+        @if (isDelayed()) { <p role="status">History updates are delayed.</p> }
+      }
+    </div>
+  }
+</section>

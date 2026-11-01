@@ -32,6 +32,16 @@ Existing refresh state migrates in place with `pendingHistory: null`; do not ini
 
 Archive validation/write failures emit fixed `Counts history invalid` or `Counts history failed` messages; replacement of an unrecovered sample emits `Counts history dropped`. The invocation fails after completing live publication, so three failing periods use the existing email alarm. Check both live freshness and archival progress: a successful live snapshot alone does not prove archival success. One pending record is retried before the next snapshot; longer storage failures can leave gaps. No provider retry is added. Disabling collection preserves any pending record for later recovery; an old code rollback can discard the new pending field, so inspect state before a rollback.
 
+### Enabling history charts
+
+This feature requires both application and deployment-stack updates. From the approved revision, run the checks and review both diffs using the infrastructure procedure below. Deploy `AirlineRanking` first, preserving the existing explicit polling setting, then `AirlineRankingDeployment`. The first stack adds a 512 MB history builder, an hourly schedule, prefix-scoped S3 permissions and an error alarm using the existing alert topic. The second adds the history function to code-only release permissions and commands. No new bucket or database is created.
+
+The release command accepts an optional fourth argument, the `HistoryFunction` output ARN. Older pipeline commands with three arguments remain compatible during this rollout, but do not update the history builder. After both stack updates, subsequent automatic releases update both functions before publishing the frontend.
+
+Wait for a scheduled history build, then verify `/api/history/v1/index.json` and one advertised daily file through CloudFront, including gzip decoding, valid counts and source times. Open total and group charts and check the exact observations. Verify the archive is still private. A successful application release does not verify the next history build; until its first success, charts display an unavailable state. No provider call is needed for verification.
+
+If a history build fails, inspect its CloudWatch logs and permissions. The previous index remains available and the next hourly run retries automatically. Corrected source objects change the source hash and rebuild their date. To rebuild an unchanged daily file after a transformation change, remove only that derived website object through an approved maintenance action; never remove the private archive or reset refresh state. Check the prepared timestamp as well as the latest observation time: successful publication does not prove fresh collection.
+
 ### First deployment
 
 Local synthesis and tests need no AWS credentials and make no provider calls. Before deploying:

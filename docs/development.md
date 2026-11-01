@@ -49,7 +49,7 @@ Run `npm run check` before committing. GitHub Actions runs the same command plus
 | `npm run infra:diff` | Compare the stack with deployed resources |
 | `npm run infra:deploy` | Deploy the stack after reviewing its diff |
 | `npm run infra:publish -- cdk.out/outputs.json` | Upload the frontend and wait for CloudFront cache invalidation |
-| `npm run infra:release -- BUCKET DISTRIBUTION FUNCTION_ARN` | Update the existing Lambda code and publish the frontend; requires Python 3 for ZIP packaging |
+| `npm run infra:release -- BUCKET DISTRIBUTION FUNCTION_ARN [HISTORY_FUNCTION_ARN]` | Update the existing Lambda code and publish the frontend; requires Python 3 for ZIP packaging |
 
 The browser regression uses Playwright and synthetic API responses; it starts its own frontend on port 4317 without a backend or provider requests. Install Chromium once with `npx playwright install chromium` (on Linux CI, use `--with-deps`), then run `npm run test:browser`. Close anything using port 4317 first. Browser checks run separately from `npm run check`, so the deployment build does not need a browser installation.
 
@@ -58,3 +58,9 @@ Other tests use Node's built-in test runner and synthetic data. They do not requ
 ## Map implementation
 
 The map uses a bundled Natural Earth 1:110m land outline, projected with `d3-geo` using Natural Earth I. Keep the bundled path in `src/world-outline.ts`, SVG viewBox and projection constants in `src/aircraft-map-projection.ts` aligned. Pointer selection uses the nearest dot within 12 screen pixels; the hover highlight and tooltip must use the same target.
+
+## History development
+
+The local provider backend does not collect or serve history. Without published history files, charts show the unavailable state while live rankings continue. To develop against existing data without provider requests, serve a saved ranking and generated history JSON from a local static preview, or point the Angular proxy at an existing deployment. Keep downloaded archives and preview data untracked. Use synthetic records for automated tests; do not change timestamps on real observations to make them appear current.
+
+History tests cover projection, missing samples, zero counts, malformed data, unchanged-day caching, partial publication failure and recovery. A multi-day integration test follows saved counts through publication, HTTP loading and chart points, including paginated archive listings and delayed sample recovery. Browser checks should include all three periods, total and group charts, exact-value tables, empty/error states and narrow layouts.

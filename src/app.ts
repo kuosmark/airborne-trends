@@ -6,12 +6,13 @@ import { isSnapshotStale } from '../shared/ranking';
 import { createRankingClient } from './ranking-client';
 import { startVisiblePolling } from './visible-polling';
 import { formatSnapshotAge } from './snapshot-age';
+import { HistoryChartComponent } from './history-chart';
 import { RankingBoardComponent } from './ranking-board';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [DatePipe, RankingBoardComponent],
+  imports: [DatePipe, RankingBoardComponent, HistoryChartComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

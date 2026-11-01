@@ -14,7 +14,7 @@ const app = new App({ outdir: output, context: { '@aws-cdk/core:defaultCrossStac
 const env = { region: 'eu-north-1' };
 const application = new AirlineRankingStack(app, 'Application', { env });
 const deployment = new DeploymentStack(app, 'Deployment', {
-  env, website: application.website, distribution: application.distribution, refresh: application.refresh,
+  env, website: application.website, distribution: application.distribution, refresh: application.refresh, historyBuilder: application.historyBuilder,
 });
 const template = Template.fromStack(deployment);
 
@@ -35,7 +35,7 @@ test('builds check and release application code without deploying infrastructure
   assert.deepEqual(spec.phases.install.commands, ['npm ci']);
   assert.equal(spec.phases.install['runtime-versions'].nodejs, 22);
   const commands = spec.phases.build.commands;
-  const required = ['npm run check', 'npm run infra:release -- "$WEBSITE_BUCKET" "$DISTRIBUTION_ID" "$REFRESH_FUNCTION"', 'npm run infra:verify'];
+  const required = ['npm run check', 'npm run infra:release -- "$WEBSITE_BUCKET" "$DISTRIBUTION_ID" "$REFRESH_FUNCTION" "$HISTORY_FUNCTION"', 'npm run infra:verify'];
   let previousIndex = -1;
   for (const command of required) {
     const index = commands.indexOf(command);
@@ -47,7 +47,7 @@ test('builds check and release application code without deploying infrastructure
   assert.doesNotMatch(allCommands.join('\n'), /\bcdk\s+(?:deploy|destroy)|infra:deploy|\baws\s+cloudformation\b/);
   assert.deepEqual(Object.keys(template.toJSON().Parameters).sort(), ['AlertEmail', 'BootstrapVersion', 'ConnectionArn']);
   assert.deepEqual(project.Properties.Environment.EnvironmentVariables.map(variable => variable.Name).sort(),
-    ['DISTRIBUTION_ID', 'REFRESH_FUNCTION', 'WEBSITE_BUCKET']);
+    ['DISTRIBUTION_ID', 'HISTORY_FUNCTION', 'REFRESH_FUNCTION', 'WEBSITE_BUCKET']);
 });
 
 test('only failed executions of this pipeline send an email notification', () => {
@@ -104,7 +104,7 @@ test('deployment roles do not read secrets and direct website writes exclude bac
   const lambda = statements.find(statement => [].concat(statement.Action).includes('lambda:UpdateFunctionCode'));
   assert.ok(lambda);
   assert.deepEqual([].concat(lambda.Action).sort(), ['lambda:GetFunctionConfiguration', 'lambda:UpdateFunctionCode']);
-  assert.deepEqual(lambda.Resource, deployment.resolve(application.refresh.functionArn));
+  assert.deepEqual(lambda.Resource, [deployment.resolve(application.refresh.functionArn), deployment.resolve(application.historyBuilder.functionArn)]);
   for (const statement of statements.filter(statement => statement.Effect === 'Allow')) {
     assert.equal([].concat(statement.Resource).includes('*'), false);
   }

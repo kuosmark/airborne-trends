@@ -143,3 +143,15 @@ Cache structure, refresh intervals and request controls are described in [backen
 ![Aircraft type drawer showing ICAO code, category, engines, operator breakdown and aircraft locations](images/aircraft-type-details.png)
 
 *Aircraft type metadata and operator breakdown from an observed snapshot.*
+
+## Airborne history
+
+Open **Airborne history** above the rankings for total observed aircraft, or inside an identified operator/aircraft-type drawer for that group's counts. Choose **24 hours**, **7 days**, or **30 days**. Switching periods reuses the loaded observations. The chart displays the viewer’s local timezone and original observation times, with a zero-based scale, rounded horizontal gridlines fixed to that chart’s loaded 30-day peak across all periods, and nearest-observation values when hovering or tapping across the chart and under **Data details**. The total chart is independent of ranking filters.
+
+These are counts observed at each sample, not unique aircraft, flights, passengers or fleet sizes. Zero means a group was absent from an otherwise complete sample. Missing refreshes appear as gaps; coverage changes can also change counts. History begins when collection was enabled and is prepared hourly, so it can lag the live ranking. An empty period and unavailable history are shown explicitly; a failed history request does not affect the live ranking.
+
+![Seven-day airborne history with rounded gridlines and uncovered time left blank](images/airborne-history.png)
+
+*Observed counts over seven days. Time before collection began remains blank.*
+
+Within operator and aircraft-type drawers, Aircraft locations appears before Airborne history. Locations starts expanded and can be collapsed; History starts collapsed. Both sections can be open together.

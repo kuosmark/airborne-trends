@@ -144,3 +144,24 @@ test('counts archives remain retained without exposing them through CloudFront',
   const distribution = Object.values(template.findResources('AWS::CloudFront::Distribution'))[0];
   assert.doesNotMatch(JSON.stringify(distribution), /State|history\/counts/);
 });
+
+test('history builder is separately scheduled with archive-only reads and chart-only writes', () => {
+  template.hasResourceProperties('AWS::Scheduler::Schedule', {
+    State: 'DISABLED', ScheduleExpression: 'rate(1 hour)',
+  });
+  template.hasResourceProperties('AWS::Lambda::Function', {
+    Timeout: 300, MemorySize: 512, ReservedConcurrentExecutions: 1,
+    Environment: { Variables: { STATE_BUCKET: Match.anyValue(), WEBSITE_BUCKET: Match.anyValue() } },
+  });
+  const policies = Object.values(template.findResources('AWS::IAM::Policy'));
+  const history = policies.find(resource => resource.Properties.PolicyDocument.Statement.some(statement =>
+    JSON.stringify(statement.Resource).includes('/api/history/v1/')));
+  assert.ok(history);
+  const statements = history.Properties.PolicyDocument.Statement;
+  assert.equal(statements.length, 4);
+  assert.equal(JSON.stringify(statements).includes('ssm:'), false);
+  assert.equal(JSON.stringify(statements).includes('DeleteObject'), false);
+  const writes = statements.filter(statement => [].concat(statement.Action).includes('s3:PutObject'));
+  assert.equal(writes.length, 1);
+  assert.match(JSON.stringify(writes[0].Resource), /api\/history\/v1/);
+});

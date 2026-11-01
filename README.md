@@ -36,11 +36,12 @@ These are observed aircraft counts, not worldwide fleet totals. Coverage depends
 
 ![Data flow from SkyLink through a scheduled Lambda and S3 to CloudFront and the Angular app](docs/images/architecture.svg)
 
-*The diagram shows live delivery. Counts-only history is stored separately in the private state bucket.*
+*The diagram shows live delivery. An independent hourly job turns private counts archives into chart files served through the same website bucket and CloudFront; see the [history data flow](docs/architecture.md#historical-chart-delivery).*
 
 A TypeScript Lambda validates and deduplicates the observations, builds both rankings and saves a shared snapshot. Operator metadata comes from ADSBDB; bundled Mictronics references supply aircraft type names and an ICAO24 fallback.
 
 - **Shared cached data:** visitors read through CloudFront; opening drawers and maps makes no provider requests.
+- **History charts:** on-demand 24-hour, seven-day and 30-day counts for all aircraft and individual operators/types, prepared hourly from S3 archives.
 - **Counts archive:** production can retain counts-only snapshots in private S3 storage without automatic expiration.
 - **Bounded provider usage:** one scheduled poller, persisted request reservations and lookup limits protect the request budget.
 - **Verified deployments:** GitHub Actions checks pull requests. Merges to `main` trigger CodePipeline and CodeBuild, which check, publish and verify the homepage and ranking response. Infrastructure changes require a separate reviewed deployment.
