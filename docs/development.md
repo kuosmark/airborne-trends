@@ -32,7 +32,7 @@ Open http://127.0.0.1:4200. Both services listen on loopback only. Angular proxi
 
 ## Checks
 
-Run `npm run check` before committing. GitHub Actions runs the same command on pull requests and pushes to `main`.
+Run `npm run check` before committing. GitHub Actions runs the same command plus the browser regression on pull requests and pushes to `main`.
 
 | Command | Purpose |
 | --- | --- |
@@ -42,6 +42,7 @@ Run `npm run check` before committing. GitHub Actions runs the same command on p
 | `npm run typecheck:scripts` | Type-check reference updater scripts |
 | `npm run typecheck:backend` | Type-check the backend and shared ranking types |
 | `npm test` | Test ranking, caching, provider cost controls, HTTP behavior, scheduled refreshes, infrastructure and release safeguards |
+| `npm run test:browser` | Run the aircraft-filter interaction flow in Chromium at 320px, 390px and desktop widths |
 | `npm run build` | Build the frontend into `dist/airline-ranking/browser` |
 | `npm run typecheck:infra` | Type-check the CDK application |
 | `npm run infra:synth` | Bundle Lambda and validate the generated CloudFormation template without AWS lookups |
@@ -50,7 +51,9 @@ Run `npm run check` before committing. GitHub Actions runs the same command on p
 | `npm run infra:publish -- cdk.out/outputs.json` | Upload the frontend and wait for CloudFront cache invalidation |
 | `npm run infra:release -- BUCKET DISTRIBUTION FUNCTION_ARN` | Update the existing Lambda code and publish the frontend; requires Python 3 for ZIP packaging |
 
-Tests use Node's built-in test runner and synthetic data. They do not require an API key or contact either provider. Lint warnings fail the check. TypeScript rules prohibit unnecessary `else` branches after returns and shadowed names, and limit nesting to four levels. Drawer layout, responsive spacing and animations are checked manually in the browser; the unit tests do not verify their appearance.
+The browser regression uses Playwright and synthetic API responses; it starts its own frontend on port 4317 without a backend or provider requests. Install Chromium once with `npx playwright install chromium` (on Linux CI, use `--with-deps`), then run `npm run test:browser`. Close anything using port 4317 first. Browser checks run separately from `npm run check`, so the deployment build does not need a browser installation.
+
+Other tests use Node's built-in test runner and synthetic data. They do not require an API key or contact either provider. Lint warnings fail the check. TypeScript rules prohibit unnecessary `else` branches after returns and shadowed names, and limit nesting to four levels. Drawer layout, responsive spacing and animations are checked manually in the browser; the unit tests do not verify their appearance.
 
 ## Map implementation
 

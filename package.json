@@ -20,7 +20,8 @@
     "infra:publish": "node --experimental-strip-types infra/publish.ts",
     "infra:release": "node --experimental-strip-types infra/release.ts",
     "infra:verify": "node --experimental-strip-types infra/verify.ts",
-    "typecheck:scripts": "tsc -p scripts/tsconfig.json"
+    "typecheck:scripts": "tsc -p scripts/tsconfig.json",
+    "test:browser": "playwright test --config tests/browser/playwright.config.mjs"
   },
   "dependencies": {
     "@angular/common": "^21.2.0",
@@ -40,6 +41,7 @@
     "@aws-sdk/client-cloudfront": "^3.1146.0",
     "@aws-sdk/client-lambda": "^3.1146.0",
     "@eslint/js": "10.0.1",
+    "@playwright/test": "^1.64.1",
     "@types/d3-geo": "^3.1.1",
     "@types/node": "^22.20.5",
     "angular-eslint": "21.4.0",

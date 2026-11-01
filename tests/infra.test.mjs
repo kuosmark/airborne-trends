@@ -86,29 +86,29 @@ test('custom domain reuses the existing zone and certificate with a CloudFront a
 
 test('the refresh role can access only its state objects, published ranking and API-key parameter', () => {
   const policies = Object.values(template.findResources('AWS::IAM::Policy'));
-  const policy = policies.find(resource => resource.Properties.PolicyDocument.Statement.some(statement =>
-    Array.isArray(statement.Action) && statement.Action.includes('s3:GetObject')));
-  assert.ok(policy);
-  const statements = policy.Properties.PolicyDocument.Statement;
-  assert.equal(statements.length, 4);
-  const state = statements.find(statement => [].concat(statement.Action).includes('s3:GetObject'));
-  const ranking = statements.find(statement => statement.Action === 's3:PutObject');
-  const key = statements.find(statement => statement.Action === 'ssm:GetParameter');
-  assert.deepEqual([...state.Action].sort(), ['s3:GetObject', 's3:PutObject']);
-  assert.equal(state.Resource.length, 2);
-  assert.match(JSON.stringify(state.Resource), /\/operator-names\.json/);
-  assert.match(JSON.stringify(state.Resource), /\/refresh-state\.json/);
-  assert.equal(ranking.Action, 's3:PutObject');
-  assert.match(JSON.stringify(ranking.Resource), /\/api\/ranking/);
-  assert.equal(key.Action, 'ssm:GetParameter');
-  assert.match(JSON.stringify(key.Resource), /parameter\/airline-ranking\/skylink-api-key/);
-  const history = statements.find(statement => JSON.stringify(statement.Resource).includes('/history/counts/v1/'));
-  assert.equal(history.Action, 's3:PutObject');
-  assert.deepEqual(history.Condition, { StringEquals: { 's3:if-none-match': '*' } });
-  assert.match(JSON.stringify(history.Resource), /history\/counts\/v1\/\*/);
-  for (const statement of statements.filter(item => item !== history)) {
-    assert.equal(JSON.stringify(statement.Resource).includes('*'), false);
-  }
+  const role = JSON.stringify(stack.resolve(stack.refresh.role.roleName));
+  const refreshPolicies = policies.filter(resource => resource.Properties.Roles.some(name => JSON.stringify(name) === role));
+  assert.ok(refreshPolicies.length > 0);
+  const statements = refreshPolicies.flatMap(resource => resource.Properties.PolicyDocument.Statement);
+  const state = stack.node.findChild('State');
+  const key = stack.node.findChild('ApiKey');
+  const historyCondition = { StringEquals: { 's3:if-none-match': '*' } };
+  const expectedGrants = [
+    ...['operator-names.json', 'refresh-state.json'].flatMap(object =>
+      ['s3:GetObject', 's3:PutObject'].map(action => [action, state.arnForObjects(object), {}])),
+    ...['api/ranking', 'api/ranking-v2'].map(object => ['s3:PutObject', stack.website.arnForObjects(object), {}]),
+    ['ssm:GetParameter', key.parameterArn, {}],
+    ['s3:PutObject', state.arnForObjects('history/counts/v1/*'), historyCondition],
+  ].map(grant => JSON.stringify(stack.resolve(grant)));
+  // Compare effective grants, allowing equivalent statements to be split or combined.
+  const actualGrants = statements.flatMap(statement => {
+    assert.equal(statement.Effect, 'Allow');
+    assert.equal(statement.NotAction, undefined);
+    assert.equal(statement.NotResource, undefined);
+    return [].concat(statement.Action).flatMap(action =>
+      [].concat(statement.Resource).map(resource => JSON.stringify([action, resource, statement.Condition ?? {}])));
+  });
+  assert.deepEqual(new Set(actualGrants), new Set(expectedGrants));
 });
 
 test('three consecutive failing periods notify the deployment-supplied email', () => {

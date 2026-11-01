@@ -8,3 +8,5 @@ cdk.out/
 .DS_Store
 .cache/
 __pycache__/
+test-results/
+playwright-report/
