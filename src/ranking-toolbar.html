@@ -38,9 +38,7 @@
       </span>
     </div>
 
-  </div>
-  <div class="result-actions">
     <button class="reset-filters" type="button" [class.is-inactive]="!searchQuery().trim() && !isClassFiltered()" [disabled]="!searchQuery().trim() && !isClassFiltered()" (click)="filtersReset.emit()">Reset filters</button>
-    <span class="snapshot-status">Updated {{ snapshotAge() }}</span>
   </div>
+  <span class="snapshot-status">Updated {{ snapshotAge() }}</span>
 </div>

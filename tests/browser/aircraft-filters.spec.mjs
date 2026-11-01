@@ -78,3 +78,29 @@ test('category, engine count and search combine, toggle and reset without includ
   await expect(reset).toBeHidden();
   await expect(page.getByRole('button', { name: 'Reset filters', exact: true, includeHidden: true })).toBeDisabled();
 });
+
+test('snapshot age aligns right when it fits and left below counts on narrow screens', async ({ page }) => {
+  await page.route('**/api/**', route => route.fulfill({ json: {
+    updatedAt: new Date().toISOString(), isStale: false, airborneCount: 4891,
+    positions: [], airlines: [{ id: 'TST', name: 'Test operator', count: 4891, aircraftTypes: [{ name: 'AIRBUS A-320', count: 4891 }] }],
+    unassignedAircraft: { count: 0, aircraftTypes: [] },
+    aircraftTypeRankings: [{ id: 'A320', name: 'AIRBUS A-320', classification: 'L2J', count: 4891, operators: [{ id: 'TST', count: 4891 }] }],
+    unknownAircraftType: { count: 0, operators: [] },
+  } }));
+  await page.goto('/');
+  for (const tab of ['Operators', 'Aircraft types']) {
+    await page.getByRole('button', { name: tab, exact: true }).click();
+    await expect(page.locator('.airborne-total')).toHaveText('4,891 aircraft');
+    const toolbar = await page.locator('.results-toolbar').boundingBox();
+    const counts = await page.locator('.ranking-counts').boundingBox();
+    const timestamp = await page.locator('.snapshot-status').boundingBox();
+    if (page.viewportSize().width < 700) {
+      expect(timestamp.y).toBeGreaterThanOrEqual(counts.y + counts.height);
+      expect(Math.abs(timestamp.x - counts.x)).toBeLessThan(1);
+    } else {
+      expect(Math.abs(timestamp.x + timestamp.width - toolbar.x - toolbar.width)).toBeLessThan(1);
+      expect(timestamp.y).toBeLessThan(counts.y + counts.height);
+    }
+    expect(await page.evaluate(() => globalThis.document.documentElement.scrollWidth <= globalThis.innerWidth)).toBe(true);
+  }
+});
