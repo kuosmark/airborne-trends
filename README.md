@@ -1,6 +1,6 @@
 # Airline Ranking
 
-Observed airborne aircraft, ranked by operator and aircraft type. Explore rank changes, fleet breakdowns and aircraft locations in one shared snapshot.
+Observed airborne aircraft, ranked by operator and aircraft type. Explore the latest snapshot, fleet breakdowns, aircraft locations and historical counts.
 
 [![Checks](https://github.com/kuosmark/airline-ranking/actions/workflows/check.yml/badge.svg)](https://github.com/kuosmark/airline-ranking/actions/workflows/check.yml)
 [![Latest release](https://img.shields.io/github/v/release/kuosmark/airline-ranking)](https://github.com/kuosmark/airline-ranking/releases/latest)
@@ -8,9 +8,9 @@ Observed airborne aircraft, ranked by operator and aircraft type. Explore rank c
 
 **[Open the live app →](https://airlines.markuskuosmanen.com/)**
 
-![Operator ranking with an expanded aircraft breakdown and fleet map](docs/images/operators.png)
+![Operator ranking with search, observed airborne counts and access to airborne history](docs/images/operators.png)
 
-*Operator details and aircraft locations from an observed snapshot. Counts and positions change between refreshes.*
+*Operator ranking from an observed snapshot. Counts change between refreshes.*
 
 ## Explore the rankings
 
@@ -26,7 +26,7 @@ Observed airborne aircraft, ranked by operator and aircraft type. Explore rank c
 <details>
 <summary>See the mobile layout</summary>
 
-<img src="docs/images/mobile.png" alt="Operator ranking on a narrow mobile screen with search and grouped counts" width="375">
+<img src="docs/images/mobile.png" alt="Operator ranking on a mobile screen with history, search and observed aircraft counts" width="390">
 
 </details>
 
@@ -90,4 +90,4 @@ Project-owned code and documentation are available under the [MIT licence](LICEN
 - **Natural Earth map outline:** [public domain](https://www.naturalearthdata.com/about/terms-of-use/).
 - **SkyLink observations and ADSBDB metadata:** supplied by their respective services; the project licence does not grant rights to provider data.
 
-Screenshots show observed snapshots captured in October 2026.
+Screenshots show observed snapshots captured in November 2026.
