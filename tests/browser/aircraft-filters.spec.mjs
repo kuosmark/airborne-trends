@@ -60,7 +60,8 @@ test('category, engine count and search combine, toggle and reset without includ
   await expect(unknown).toBeHidden();
   await search.fill('AT76');
   await expectResults(['ATR 72-600'], 3, '1 of 4 types');
-  await search.fill('no matching type');
+  // A known type outside the active engine filter must still be excluded.
+  await search.fill('B744');
   await expectResults([], 0, '0 of 4 types');
   await expect(board.getByText('No matches for the selected filters.', { exact: true })).toBeVisible();
 
