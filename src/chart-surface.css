@@ -1,0 +1,5 @@
+.chart-surface {
+  background: #fff;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--control-radius);
+}

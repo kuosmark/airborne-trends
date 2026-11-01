@@ -12,4 +12,7 @@
   @if (group.positions; as positions) {
     <app-aircraft-map [positions]="positions" [count]="group.count" />
   }
+  @if (groupId() !== 'unassigned') {
+    <app-history-chart [isInDrawer]="true" [dimension]="breakdownLabel() === 'operators' ? 'aircraftTypes' : 'operators'" [groupId]="groupId()" [name]="groupName()" />
+  }
 </div>

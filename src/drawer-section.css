@@ -1,0 +1,38 @@
+.drawer-section-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.drawer-section-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.drawer-section-toggle:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: -3px;
+}
+.chevron {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-right: 2px solid #626c76;
+  border-bottom: 2px solid #626c76;
+  transform: rotate(45deg);
+}
+.chevron.is-open {
+  transform: rotate(225deg);
+}

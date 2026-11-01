@@ -94,3 +94,16 @@ test('qualified, wildcard and out-of-region Lambda targets are rejected without 
   }
   assert.equal(send.mock.callCount(), 0);
 });
+
+
+test('history package exports its handler without the aircraft database', async context => {
+  const archive = await packageBackend(true);
+  const directory = await mkdtemp(join(tmpdir(), 'airline-history-package-test-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const files = execFileSync('python3', ['-c',
+    'import io, sys, zipfile; z = zipfile.ZipFile(io.BytesIO(sys.stdin.buffer.read())); print(z.namelist()); z.extractall(sys.argv[1])',
+    directory], { input: archive }).toString().trim();
+  assert.equal(files.includes('mictronics'), false);
+  const require = createRequire(import.meta.url);
+  assert.equal(typeof require(join(directory, 'index.js')).handler, 'function');
+});

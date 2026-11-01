@@ -1,6 +1,6 @@
 # Airline Ranking
 
-Observed airborne aircraft, ranked by operator and aircraft type. Explore rank changes, fleet breakdowns and aircraft locations in one shared snapshot.
+Observed airborne aircraft, ranked by operator and aircraft type. Explore the latest snapshot, fleet breakdowns, aircraft locations and historical counts.
 
 [![Checks](https://github.com/kuosmark/airline-ranking/actions/workflows/check.yml/badge.svg)](https://github.com/kuosmark/airline-ranking/actions/workflows/check.yml)
 [![Latest release](https://img.shields.io/github/v/release/kuosmark/airline-ranking)](https://github.com/kuosmark/airline-ranking/releases/latest)
@@ -8,9 +8,9 @@ Observed airborne aircraft, ranked by operator and aircraft type. Explore rank c
 
 **[Open the live app →](https://airlines.markuskuosmanen.com/)**
 
-![Operator ranking with an expanded aircraft breakdown and fleet map](docs/images/operators.png)
+![Operator ranking with search, observed airborne counts and access to airborne history](docs/images/operators.png)
 
-*Operator details and aircraft locations from an observed snapshot. Counts and positions change between refreshes.*
+*Operator ranking from an observed snapshot. Counts change between refreshes.*
 
 ## Explore the rankings
 
@@ -26,7 +26,7 @@ Observed airborne aircraft, ranked by operator and aircraft type. Explore rank c
 <details>
 <summary>See the mobile layout</summary>
 
-<img src="docs/images/mobile.png" alt="Operator ranking on a narrow mobile screen with search and grouped counts" width="375">
+<img src="docs/images/mobile.png" alt="Operator ranking on a mobile screen with history, search and observed aircraft counts" width="390">
 
 </details>
 
@@ -36,11 +36,12 @@ These are observed aircraft counts, not worldwide fleet totals. Coverage depends
 
 ![Data flow from SkyLink through a scheduled Lambda and S3 to CloudFront and the Angular app](docs/images/architecture.svg)
 
-*The diagram shows live delivery. Counts-only history is stored separately in the private state bucket.*
+*The diagram shows live delivery. An independent hourly job turns private counts archives into chart files served through the same website bucket and CloudFront; see the [history data flow](docs/architecture.md#historical-chart-delivery).*
 
 A TypeScript Lambda validates and deduplicates the observations, builds both rankings and saves a shared snapshot. Operator metadata comes from ADSBDB; bundled Mictronics references supply aircraft type names and an ICAO24 fallback.
 
 - **Shared cached data:** visitors read through CloudFront; opening drawers and maps makes no provider requests.
+- **History charts:** on-demand 24-hour, seven-day and 30-day counts for all aircraft and individual operators/types, prepared hourly from S3 archives.
 - **Counts archive:** production can retain counts-only snapshots in private S3 storage without automatic expiration.
 - **Bounded provider usage:** one scheduled poller, persisted request reservations and lookup limits protect the request budget.
 - **Verified deployments:** GitHub Actions checks pull requests. Merges to `main` trigger CodePipeline and CodeBuild, which check, publish and verify the homepage and ranking response. Infrastructure changes require a separate reviewed deployment.
@@ -89,4 +90,4 @@ Project-owned code and documentation are available under the [MIT licence](LICEN
 - **Natural Earth map outline:** [public domain](https://www.naturalearthdata.com/about/terms-of-use/).
 - **SkyLink observations and ADSBDB metadata:** supplied by their respective services; the project licence does not grant rights to provider data.
 
-Screenshots show observed snapshots captured in October 2026.
+Screenshots show observed snapshots captured in November 2026.

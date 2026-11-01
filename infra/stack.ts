@@ -26,6 +26,7 @@ export class AirlineRankingStack extends Stack {
   readonly website: s3.Bucket;
   readonly distribution: cloudfront.Distribution;
   readonly refresh: nodejs.NodejsFunction;
+  readonly historyBuilder: nodejs.NodejsFunction;
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
     if (props.env?.region !== 'eu-north-1') { throw new Error('Deploy only in eu-north-1'); }
@@ -55,6 +56,7 @@ export class AirlineRankingStack extends Stack {
     const state = this.createStateBucket();
     this.refresh = this.createRefreshFunction(state);
     const schedule = this.createRefreshSchedule(isPollingEnabled);
+    this.historyBuilder = this.createHistoryBuilder(state, isPollingEnabled);
     this.createRefreshAlerts(alertEmail.valueAsString);
     this.createOutputs(state, schedule);
   }
@@ -174,6 +176,41 @@ export class AirlineRankingStack extends Stack {
     return refresh;
   }
 
+  private createHistoryBuilder(state: s3.Bucket, isPollingEnabled: boolean): nodejs.NodejsFunction {
+    const builder = new nodejs.NodejsFunction(this, 'HistoryBuilder', {
+      entry: fileURLToPath(new URL('../backend/history-builder.ts', import.meta.url)),
+      handler: 'handler', runtime: lambda.Runtime.NODEJS_22_X, architecture: lambda.Architecture.ARM_64,
+      memorySize: 512, timeout: Duration.minutes(5), reservedConcurrentExecutions: 1,
+      retryAttempts: 0, maxEventAge: Duration.minutes(1),
+      logGroup: new logs.LogGroup(this, 'HistoryLogs', {
+        retention: logs.RetentionDays.ONE_WEEK, removalPolicy: RemovalPolicy.DESTROY,
+      }),
+      bundling: { externalModules: [], target: 'node22', minify: false },
+      environment: { STATE_BUCKET: state.bucketName, WEBSITE_BUCKET: this.website.bucketName },
+    });
+    builder.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['s3:ListBucket'], resources: [state.bucketArn],
+      conditions: { StringLike: { 's3:prefix': 'history/counts/v1/*' } },
+    }));
+    builder.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject'], resources: [state.arnForObjects('history/counts/v1/*')],
+    }));
+    builder.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject', 's3:PutObject'], resources: [this.website.arnForObjects('api/history/v1/*')],
+    }));
+    // Check for a published daily file before reading its source fingerprint.
+    builder.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['s3:ListBucket'], resources: [this.website.bucketArn],
+      conditions: { StringLike: { 's3:prefix': 'api/history/v1/*' } },
+    }));
+    new scheduler.Schedule(this, 'HistorySchedule', {
+      schedule: scheduler.ScheduleExpression.rate(Duration.hours(1)), enabled: isPollingEnabled,
+      target: new targets.LambdaInvoke(builder, { retryAttempts: 0, maxEventAge: Duration.minutes(1) }),
+    });
+    new CfnOutput(this, 'HistoryFunction', { value: builder.functionArn });
+    return builder;
+  }
+
   private createRefreshSchedule(isPollingEnabled: boolean): scheduler.Schedule {
     return new scheduler.Schedule(this, 'RefreshSchedule', {
       schedule: scheduler.ScheduleExpression.rate(Duration.minutes(15)),
@@ -197,6 +234,11 @@ export class AirlineRankingStack extends Stack {
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     });
     failures.addAlarmAction(new actions.SnsAction(alerts));
+    new cloudwatch.Alarm(this, 'HistoryFailures', {
+      metric: this.historyBuilder.metricErrors({ period: Duration.hours(1) }),
+      threshold: 1, evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    }).addAlarmAction(new actions.SnsAction(alerts));
   }
 
   private createOutputs(state: s3.Bucket, schedule: scheduler.Schedule): void {

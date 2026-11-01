@@ -1,0 +1,224 @@
+:host {
+  display: block;
+  margin: 16px 0;
+}
+.history {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--surface-radius);
+  background: white;
+  overflow: hidden;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.history-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-weight: 600;
+}
+.history-name {
+  display: block;
+  margin-top: 4px;
+  color: #626c76;
+  font-size: 13px;
+  font-weight: 400;
+}
+.history-body {
+  container-type: inline-size;
+  padding: 0 20px 16px;
+}
+.periods {
+  display: flex;
+  gap: 4px;
+}
+.periods button, .retry {
+  min-height: 44px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--control-radius);
+  background: white;
+  padding: 8px 14px;
+}
+.periods button[aria-pressed="true"] {
+  background: #e7efea;
+  border-color: #567061;
+  font-weight: 600;
+}
+button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: -3px;
+}
+svg {
+  display: block;
+  width: 100%;
+  height: 180px;
+  overflow: visible;
+}
+.grid-line {
+  stroke: #e5e8eb;
+  vector-effect: non-scaling-stroke;
+}
+.series {
+  fill: none;
+  stroke: #385d4c;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+circle {
+  stroke: #385d4c;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  fill: #385d4c;
+}
+.axis-labels {
+  position: relative;
+  height: 24px;
+  margin-left: 52px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.axis-tick {
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.axis-tick span {
+  display: block;
+}
+@container (max-width: 420px) {
+  .axis-tick:not(.mobile-tick) {
+    display: none;
+  }
+}
+.history-footer, .history-availability, .values {
+  color: #626c76;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.values summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.table-scroll {
+  max-height: 220px;
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+th, td {
+  padding: 6px;
+  border-bottom: 1px solid var(--surface-border);
+}
+@media (max-width: 480px) {
+  .history-toggle {
+    padding: 14px 12px;
+  }
+  .history-body {
+    padding: 0 12px 12px;
+  }
+}
+
+.plot {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+}
+.y-axis {
+  position: relative;
+  text-align: right;
+  color: #626c76;
+  font-size: 12px;
+}
+
+
+.history-surface {
+  margin-top: 20px;
+  padding: 8px 12px 4px;
+}
+.y-axis span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+}
+.chart-canvas {
+  position: relative;
+  min-width: 0;
+}
+.chart-tooltip {
+  position: absolute;
+  z-index: 1;
+  width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 8px #00000015;
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 18px;
+}
+.chart-tooltip span, .chart-tooltip strong {
+  display: block;
+}
+.history-availability {
+  min-height: 20px;
+  margin: 20px 0 0;
+}
+.history-footer {
+  margin-top: 8px;
+}
+
+.history.is-embedded {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.is-embedded .history-body {
+  padding: 8px 0 0;
+}
+.is-embedded .periods button {
+  white-space: nowrap;
+  font-size: 13px;
+}
+.is-embedded .history-footer,
+.is-embedded .history-availability,
+.is-embedded .values {
+  font-size: 12px;
+}
+
+@container (max-width: 420px) {
+  .is-embedded .periods button {
+    flex: 1;
+    padding: 8px 4px;
+  }
+}
+
+@container (max-width: 260px) {
+  .history-surface {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .plot {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 6px;
+  }
+  .axis-labels {
+    margin-left: 42px;
+    font-size: 11px;
+  }
+}

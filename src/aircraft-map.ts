@@ -10,10 +10,11 @@ import { projectAircraft } from './aircraft-map-projection';
   imports: [DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './aircraft-map.html',
-  styleUrl: './aircraft-map.css',
+  styleUrls: ['./drawer-section.css', './chart-surface.css', './aircraft-map.css'],
 })
 export class AircraftMapComponent {
   readonly worldOutline = worldOutline;
+  readonly isOpen = signal(true);
   readonly positions = input.required<AircraftPosition[]>();
   readonly count = input.required<number>();
   readonly selectedId = signal<string | null>(null);

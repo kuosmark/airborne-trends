@@ -1,10 +1,16 @@
 <section class="aircraft-map" aria-label="Aircraft locations">
-  <h2>Aircraft locations</h2>
+  <button type="button" class="drawer-section-title drawer-section-toggle" [attr.aria-expanded]="isOpen()"
+    (click)="isOpen.set(!isOpen()); hoveredId.set(null)">
+    <span>Aircraft locations</span>
+    <span class="chevron" [class.is-open]="isOpen()" aria-hidden="true"></span>
+  </button>
+  @if (isOpen()) {
+  <div class="map-body">
   @if (points().length < count()) {
     <p class="map-coverage">Locations available for {{ points().length }} of {{ count() }} aircraft</p>
   }
   @if (points().length > 0) {
-    <div class="map-surface">
+    <div class="map-surface chart-surface">
       <!-- Keyboard activation is handled by each labeled aircraft button below. -->
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
       <svg viewBox="0 0 800 412" role="group" aria-label="Aircraft positions on a world map"
@@ -42,4 +48,6 @@
     </div>
   }
   <p class="map-caption">Locations at last update</p>
+  </div>
+  }
 </section>

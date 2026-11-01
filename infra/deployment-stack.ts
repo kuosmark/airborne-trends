@@ -17,6 +17,7 @@ interface DeploymentProps extends StackProps {
   website: s3.IBucket;
   distribution: IDistribution;
   refresh: IFunction;
+  historyBuilder: IFunction;
 }
 
 export class DeploymentStack extends Stack {
@@ -90,6 +91,7 @@ export class DeploymentStack extends Stack {
         WEBSITE_BUCKET: { value: props.website.bucketName },
         DISTRIBUTION_ID: { value: props.distribution.distributionId },
         REFRESH_FUNCTION: { value: props.refresh.functionArn },
+        HISTORY_FUNCTION: { value: props.historyBuilder.functionArn },
       },
       buildSpec: this.createReleaseBuildSpec(),
     });
@@ -108,7 +110,7 @@ export class DeploymentStack extends Stack {
         build: {
           commands: [
             'npm run check',
-            'npm run infra:release -- "$WEBSITE_BUCKET" "$DISTRIBUTION_ID" "$REFRESH_FUNCTION"',
+            'npm run infra:release -- "$WEBSITE_BUCKET" "$DISTRIBUTION_ID" "$REFRESH_FUNCTION" "$HISTORY_FUNCTION"',
             'npm run infra:verify',
           ],
         },
@@ -120,7 +122,7 @@ export class DeploymentStack extends Stack {
   private grantReleasePermissions(build: codebuild.PipelineProject, props: DeploymentProps): void {
     build.addToRolePolicy(new iam.PolicyStatement({
       actions: ['lambda:GetFunctionConfiguration', 'lambda:UpdateFunctionCode'],
-      resources: [props.refresh.functionArn],
+      resources: [props.refresh.functionArn, props.historyBuilder.functionArn],
     }));
     build.addToRolePolicy(new iam.PolicyStatement({
       actions: ['s3:PutObject'],

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { AircraftBreakdownComponent } from './aircraft-breakdown';
 import type { AircraftGroup } from '../shared/ranking';
+import { HistoryChartComponent } from './history-chart';
 import { AircraftMapComponent } from './aircraft-map';
 
 @Component({
   selector: 'app-aircraft-group-details',
   standalone: true,
-  imports: [AircraftBreakdownComponent, AircraftMapComponent],
+  imports: [AircraftBreakdownComponent, AircraftMapComponent, HistoryChartComponent],
   templateUrl: './aircraft-group-details.html',
   styleUrl: './aircraft-group-details.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

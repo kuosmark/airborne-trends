@@ -12,4 +12,5 @@ new DeploymentStack(app, 'AirlineRankingDeployment', {
   website: application.website,
   distribution: application.distribution,
   refresh: application.refresh,
+  historyBuilder: application.historyBuilder,
 });
