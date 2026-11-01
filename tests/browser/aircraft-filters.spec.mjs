@@ -91,16 +91,20 @@ test('snapshot age aligns right when it fits and left below counts on narrow scr
   for (const tab of ['Operators', 'Aircraft types']) {
     await page.getByRole('button', { name: tab, exact: true }).click();
     await expect(page.locator('.airborne-total')).toHaveText('4,891 aircraft');
-    const toolbar = await page.locator('.results-toolbar').boundingBox();
-    const counts = await page.locator('.ranking-counts').boundingBox();
-    const timestamp = await page.locator('.snapshot-status').boundingBox();
-    if (page.viewportSize().width < 700) {
-      expect(timestamp.y).toBeGreaterThanOrEqual(counts.y + counts.height);
-      expect(Math.abs(timestamp.x - counts.x)).toBeLessThan(1);
-    } else {
-      expect(Math.abs(timestamp.x + timestamp.width - toolbar.x - toolbar.width)).toBeLessThan(1);
-      expect(timestamp.y).toBeLessThan(counts.y + counts.height);
-    }
+    await expect(page.locator('.search-results')).toHaveText(tab === 'Operators' ? '1 operators' : '1 types');
+    await expect.poll(() => page.evaluate(() => {
+      const toolbar = globalThis.document.querySelector('.results-toolbar');
+      const status = toolbar.querySelector('.ranking-status').getBoundingClientRect();
+      const timestamp = toolbar.querySelector('.snapshot-status').getBoundingClientRect();
+      const bounds = toolbar.getBoundingClientRect();
+      const gap = parseFloat(globalThis.getComputedStyle(toolbar).columnGap);
+      const isInline = status.width + gap + timestamp.width <= bounds.width + 1;
+      if (isInline) {
+        return Math.abs(timestamp.right - bounds.right) < 1
+          && timestamp.top >= status.top && timestamp.bottom <= status.bottom + 1;
+      }
+      return Math.abs(timestamp.left - bounds.left) < 1 && timestamp.top >= status.bottom;
+    })).toBe(true);
     expect(await page.evaluate(() => globalThis.document.documentElement.scrollWidth <= globalThis.innerWidth)).toBe(true);
   }
 });
