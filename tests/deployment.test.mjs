@@ -35,7 +35,16 @@ test('builds check and release application code without deploying infrastructure
   assert.deepEqual(spec.phases.install.commands, ['npm ci']);
   assert.equal(spec.phases.install['runtime-versions'].nodejs, 22);
   const commands = spec.phases.build.commands;
-  assert.deepEqual(commands, ['npm run check', 'npm run infra:release -- "$WEBSITE_BUCKET" "$DISTRIBUTION_ID" "$REFRESH_FUNCTION"', 'npm run infra:verify']);
+  const required = ['npm run check', 'npm run infra:release -- "$WEBSITE_BUCKET" "$DISTRIBUTION_ID" "$REFRESH_FUNCTION"', 'npm run infra:verify'];
+  let previousIndex = -1;
+  for (const command of required) {
+    const index = commands.indexOf(command);
+    assert.ok(index > previousIndex, `Missing or out-of-order command: ${command}`);
+    assert.equal(commands.lastIndexOf(command), index, `Repeated command: ${command}`);
+    previousIndex = index;
+  }
+  const allCommands = Object.values(spec.phases).flatMap(phase => [...(phase.commands ?? []), ...(phase.finally ?? [])]);
+  assert.doesNotMatch(allCommands.join('\n'), /\bcdk\s+(?:deploy|destroy)|infra:deploy|\baws\s+cloudformation\b/);
   assert.deepEqual(Object.keys(template.toJSON().Parameters).sort(), ['AlertEmail', 'BootstrapVersion', 'ConnectionArn']);
   assert.deepEqual(project.Properties.Environment.EnvironmentVariables.map(variable => variable.Name).sort(),
     ['DISTRIBUTION_ID', 'REFRESH_FUNCTION', 'WEBSITE_BUCKET']);
