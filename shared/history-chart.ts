@@ -1,7 +1,10 @@
+import { isHistorySummaries, type HistorySummary } from './history-summary.ts';
 export interface HistoryDay {
   schemaVersion: 1;
   date: string;
   times: string[];
+  slots?: number[];
+  summaries?: { hourly: HistorySummary[]; daily: HistorySummary[] };
   totals: number[];
   operators: Partial<Record<string, number[]>>;
   aircraftTypes: Partial<Record<string, number[]>>;
@@ -33,6 +36,10 @@ export function isHistoryDay(value: unknown): value is HistoryDay {
   if (!times.every((time, index) => typeof time === 'string' && time.startsWith(String(value['date'])) &&
       Number.isFinite(Date.parse(time)) && new Date(time).toISOString() === time &&
       (index === 0 || String(times[index - 1]) < time))) { return false; }
+  if (value['slots'] !== undefined && (!isCounts(value['slots'], times.length) ||
+      !value['slots'].every((slot, index) =>
+        Math.abs(slot * 900_000 - Date.parse(String(times[index]))) < 900_000))) { return false; }
+  if (value['summaries'] !== undefined && !isHistorySummaries(value['summaries'], value['date'])) { return false; }
   return isCounts(value['totals'], times.length) &&
     isSeries(value['operators'], times.length, /^[A-Z]{3}$/) &&
     isSeries(value['aircraftTypes'], times.length, /^[A-Z0-9]{2,4}$/);

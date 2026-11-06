@@ -7,21 +7,35 @@ test('open history ages without refetching or shifting its chart when periods ch
     updatedAt: now.toISOString(), isStale: false, airborneCount: 3, positions: [],
     airlines: [], unassignedAircraft: { count: 3, aircraftTypes: [{ name: 'Unknown', count: 3 }] },
   } }));
+  const day = {
+    schemaVersion: 1, date: '2026-11-01',
+    times: Array.from({ length: 48 }, (_, index) =>
+      new Date(Date.parse('2026-11-01T00:05:00Z') + index * 15 * 60_000).toISOString()),
+    totals: Array(48).fill(3), operators: {}, aircraftTypes: {},
+  };
+  const year = {
+    schemaVersion: 1, generatedAt: now.toISOString(), daily: [{
+      time: Date.parse('2026-11-01T00:00:00Z'), end: now.getTime(),
+      samples: 48, expected: 48, isPartial: true, isCovered: true,
+      total: 3, operators: {}, aircraftTypes: {},
+    }],
+  };
   let historyRequests = 0;
   await page.route('**/api/history/v1/**', route => {
     historyRequests++;
-    return route.fulfill({ json: route.request().url().endsWith('/index.json')
+    const url = route.request().url();
+    const json = url.endsWith('/index.json')
       ? { schemaVersion: 1, generatedAt: now.toISOString(), days: ['2026-11-01'] }
-      : { schemaVersion: 1, date: '2026-11-01', times: ['2026-11-01T11:45:00.000Z'],
-          totals: [3], operators: {}, aircraftTypes: {} },
-    });
+      : url.endsWith('/year.json') ? year : day;
+    return route.fulfill({ json });
   });
   await page.goto('/');
   const chart = page.locator('app-history-chart').first();
   await chart.getByRole('button', { name: /Airborne history/ }).click();
-  await expect(chart.locator('.history-footer')).toHaveText('History updated just now');
+  await chart.locator('summary').click();
+  await expect(chart.locator('.details-meta')).toContainText('Updated just now');
   const scale = await chart.locator('.y-axis').textContent();
-  for (const period of ['7 days', '30 days', '24 hours']) {
+  for (const period of ['7 days', '30 days', '1 year', '24 hours']) {
     const button = chart.getByRole('button', { name: period, exact: true });
     await button.click();
     await expect(button).toHaveAttribute('aria-pressed', 'true');
@@ -29,8 +43,8 @@ test('open history ages without refetching or shifting its chart when periods ch
   }
   const path = await chart.locator('path.series').getAttribute('d');
   await page.clock.fastForward(121 * 60_000);
-  await expect(chart.locator('.history-footer')).toHaveText('History updated 2 hr ago');
+  await expect(chart.locator('.details-meta')).toContainText('Updated 2 hr ago');
   await expect(chart.getByText('History updates are delayed.')).toBeVisible();
   await expect(chart.locator('path.series')).toHaveAttribute('d', path);
-  expect(historyRequests).toBe(2);
+  expect(historyRequests).toBe(3);
 });

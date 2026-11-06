@@ -38,3 +38,13 @@ test('history preserves request cancellation rather than returning partial resul
   controller.abort();
   await assert.rejects(loadHistory(7, controller.signal, now), { name: 'AbortError' });
 });
+
+test('year loader accepts validated daily summaries, handles old deployments, and rejects malformed data',async context=>{
+  const {loadHistoryYear}=await import('../src/history-client.ts');
+  const fetchMock=context.mock.method(globalThis,'fetch',async()=>globalThis.Response.json({schemaVersion:1,generatedAt:index.generatedAt,daily:[]}));
+  assert.deepEqual((await loadHistoryYear(new globalThis.AbortController().signal)).daily,[]);
+  fetchMock.mock.mockImplementation(async()=>new globalThis.Response('',{status:404}));
+  assert.equal(await loadHistoryYear(new globalThis.AbortController().signal),null);
+  fetchMock.mock.mockImplementation(async()=>globalThis.Response.json({schemaVersion:1,generatedAt:index.generatedAt,daily:[null]}));
+  await assert.rejects(loadHistoryYear(new globalThis.AbortController().signal));
+});

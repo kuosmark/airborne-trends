@@ -6,7 +6,7 @@ import { buildHistoryDay } from '../backend/history-builder.ts';
 import { historyPoints, isHistoryDay, isHistoryIndex } from '../shared/history-chart.ts';
 import { plotHistory } from '../src/history-plot.ts';
 const record = (time, count = 3) => ({schemaVersion:1,countingVersion:1,referenceVersion:'a'.repeat(64),
-  observedAt:`2026-10-30T${time}:00.000Z`,scheduledSlot:1992576,airborneCount:count,
+  observedAt:`2026-10-30T${time}:00.000Z`,scheduledSlot:Math.floor(Date.parse(`2026-10-30T${time}:00.000Z`)/900000),airborneCount:count,
   operators:[{id:'FIN',name:'Finnair',count}],aircraftTypes:[{id:'A320',name:'Airbus A320',count}],
   unknownOperatorCount:0,unknownTypeCount:0});
 test('daily history sorts observations, omits repeated names and zero-fills absent groups only at observed times',()=>{
@@ -57,7 +57,7 @@ test('history ticks use whole local hours or midnight dates within the displayed
       const date = new Date(tick);
       assert.ok(tick >= since && tick <= until);
       assert.equal(date.getMinutes(), 0);
-      assert.equal(date.getHours() % (days === 1 ? 6 : 24), 0);
+      assert.equal((days === 30 ? date.getUTCHours() : date.getHours()) % (days === 1 ? 6 : 24), 0);
     }
   }
 });

@@ -1,5 +1,5 @@
 import type { HistoryPoint } from '../shared/history-chart';
-export function plotHistory(points: HistoryPoint[], since: number, until: number, referenceMaximum = 0) {
+export function plotHistory(points: HistoryPoint[], since: number, until: number, referenceMaximum = 0, interval = 15 * 60_000) {
   const maximum = Math.max(0, ...points.map(point => point.count));
   const scalePeak = Math.max(maximum, referenceMaximum);
   const roughStep = Math.max(1, scalePeak / 4);
@@ -11,7 +11,7 @@ export function plotHistory(points: HistoryPoint[], since: number, until: number
   let path = '';
   for (let index = 0; index < points.length; index++) {
     const point = points[index];
-    const isGap = index === 0 || point.time - points[index - 1].time > 22.5 * 60_000;
+    const isGap = index === 0 || point.time - points[index - 1].time > interval * 1.5;
     path += `${isGap ? 'M' : 'L'}${x(point.time).toFixed(2)},${y(point.count).toFixed(2)} `;
   }
   const gridlines = Array.from({ length: scaleMaximum / step + 1 }, (_, index) => {
@@ -20,8 +20,8 @@ export function plotHistory(points: HistoryPoint[], since: number, until: number
   });
   return { path, maximum, gridlines, dots: points.map((point, index) => ({
     x: x(point.time), y: y(point.count),
-    isIsolated: (index === 0 || point.time - points[index - 1].time > 22.5 * 60_000) &&
-      (index === points.length - 1 || points[index + 1].time - point.time > 22.5 * 60_000),
+    isIsolated: (index === 0 || point.time - points[index - 1].time > interval * 1.5) &&
+      (index === points.length - 1 || points[index + 1].time - point.time > interval * 1.5),
   })) };
 }
 
