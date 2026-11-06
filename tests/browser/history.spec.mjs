@@ -42,11 +42,42 @@ test('open history ages without refetching or shifting its chart when periods ch
     await expect(chart.locator('.y-axis')).toHaveText(scale);
   }
   const path = await chart.locator('path.series').getAttribute('d');
+  await chart.getByRole('button', { name: /Airborne history/ }).click();
+  await chart.getByRole('button', { name: /Airborne history/ }).click();
+  await expect(chart.locator('svg')).toBeVisible();
+  await expect(chart.getByText('Loading history…')).toHaveCount(0);
+  expect(historyRequests).toBe(3);
   await page.clock.fastForward(121 * 60_000);
   await expect(chart.locator('.details-meta')).toContainText('Updated 2 hr ago');
   await expect(chart.getByText('History updates are delayed.')).toBeVisible();
   await expect(chart.locator('path.series')).toHaveAttribute('d', path);
   expect(historyRequests).toBe(3);
+  await page.clock.fastForward(24 * 60 * 60_000);
+  let releaseRefresh;
+  const refreshReady = new Promise(resolve => { releaseRefresh = resolve; });
+  let refreshRequests = 0;
+  await page.route('**/api/history/v1/**', async route => {
+    refreshRequests++;
+    await refreshReady;
+    if (route.request().url().endsWith('/year.json')) {
+      await route.fulfill({ json: year });
+    } else {
+      await route.fulfill({ status: 503, body: 'Unavailable' });
+    }
+  });
+  await chart.getByRole('button', { name: /Airborne history/ }).click();
+  await chart.getByRole('button', { name: /Airborne history/ }).click();
+  try {
+    await expect.poll(() => refreshRequests).toBe(2);
+    await expect(chart.locator('path.series')).toHaveAttribute('d', path);
+    await expect(chart.getByText('Loading history…')).toHaveCount(0);
+  } finally {
+    const yearResponse = page.waitForResponse(response => response.url().endsWith('/year.json'));
+    releaseRefresh();
+    await yearResponse;
+  }
+  await expect(chart.locator('path.series')).toHaveAttribute('d', path);
+  await expect(chart.getByText('History updates are delayed.')).toBeVisible();
 });
 
 test('recent charts do not wait for yearly data and yearly freshness uses its own timestamp', async ({ page }) => {
@@ -79,11 +110,14 @@ test('recent charts do not wait for yearly data and yearly freshness uses its ow
   await page.goto('/');
   const chart = page.locator('app-history-chart').first();
   await chart.getByRole('button', { name: /Airborne history/ }).click();
+  let loadedHeight;
   try {
     await expect(chart.locator('svg')).toBeVisible();
+    loadedHeight = await chart.locator('.history-results').evaluate(el => el.getBoundingClientRect().height);
     await expect(chart.getByText('History updates are delayed.')).toHaveCount(0);
     await chart.getByRole('button', { name: '1 year', exact: true }).click();
     await expect(chart.getByText('Loading history…')).toBeVisible();
+    expect(await chart.locator('.history-results').evaluate(el => el.getBoundingClientRect().height)).toBe(loadedHeight);
   } finally {
     releaseYear();
   }

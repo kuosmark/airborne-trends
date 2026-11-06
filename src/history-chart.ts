@@ -26,9 +26,12 @@ export class HistoryChartComponent implements OnDestroy {
   readonly year = signal<HistoryYear | null>(null);
   readonly isYearError = signal(false);
   readonly isYearLoading = signal(false);
-  readonly isActiveLoading = computed(() => this.period() === 365 ? this.isYearLoading() : this.isLoading());
-  readonly isActiveError = computed(() => this.period() === 365 ? this.isYearError() : this.isError());
-  readonly until = signal(Date.now());
+  readonly isActiveLoading = computed(() => !this.activeGeneratedAt() && (this.period() === 365 ? this.isYearLoading() : this.isLoading()));
+  readonly isRefreshError = computed(() => this.period() === 365 ? this.isYearError() : this.isError());
+  readonly isActiveError = computed(() => !this.activeGeneratedAt() && this.isRefreshError());
+  private readonly recentUntil = signal(Date.now());
+  private readonly yearUntil = signal(Date.now());
+  readonly until = computed(() => this.period() === 365 ? this.yearUntil() : this.recentUntil());
   private readonly now = signal(Date.now());
   private clock?: ReturnType<typeof setInterval>;
   readonly since = computed(() => this.period() >= 30
@@ -90,12 +93,17 @@ export class HistoryChartComponent implements OnDestroy {
       : Math.max(0, Math.min(last, current + (event.key === 'ArrowLeft' ? -1 : 1))));
   }
   private abort?: AbortController;
+  private lastLoadStartedAt = 0;
   toggle(): void {
     this.isOpen.update(value => !value);
     clearInterval(this.clock);
     if (this.isOpen()) {
       this.clock = setInterval(() => { this.now.set(Date.now()); }, 60_000);
-      void this.load();
+      this.now.set(Date.now());
+      if (!this.isLoading() && !this.isYearLoading() &&
+          (!this.activeGeneratedAt() || this.isRefreshError() || this.now() - this.lastLoadStartedAt >= HOUR_MS)) {
+        void this.load();
+      }
     }
   }
   selectPeriod(days: number): void {
@@ -114,17 +122,22 @@ export class HistoryChartComponent implements OnDestroy {
     this.isYearLoading.set(true);
     this.isYearError.set(false);
     this.now.set(Date.now());
-    this.until.set(this.now());
+    this.lastLoadStartedAt = this.now();
+    const requestUntil = this.now();
     try {
       const requestSignal = AbortSignal.any([abort.signal, AbortSignal.timeout(15_000)]);
       void loadHistoryYear(requestSignal).catch(() => null).then(year => {
         if (abort.signal.aborted) { return; }
-        this.year.set(year);
+        if (year) {
+          this.year.set(year);
+          this.yearUntil.set(requestUntil);
+        }
         this.isYearError.set(year === null);
         this.isYearLoading.set(false);
       });
-      const result = await loadHistory(30, requestSignal, this.until());
+      const result = await loadHistory(30, requestSignal, requestUntil);
       if (!abort.signal.aborted) {
+        this.recentUntil.set(requestUntil);
         this.days.set(result.days);
         this.generatedAt.set(result.index.generatedAt);
       }

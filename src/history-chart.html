@@ -12,13 +12,20 @@
         <button type="button" [attr.aria-pressed]="period() === 365" (click)="selectPeriod(365)">1 year</button>
       </div>
       <p class="history-resolution">{{ resolution() }}</p>
+      <div class="history-results">
       @if (isActiveLoading()) {
+        <div class="chart-surface history-surface history-placeholder">
         <p role="status">Loading history…</p>
+        </div>
       } @else if (isActiveError()) {
+        <div class="chart-surface history-surface history-placeholder">
         <p role="status">History is temporarily unavailable.</p>
         <button class="retry" type="button" (click)="load()">Try again</button>
+        </div>
       } @else if (points().length === 0) {
+        <div class="chart-surface history-surface history-placeholder">
         <p>{{ rawPoints().length ? "Not enough coverage to show reliable averages for this period." : "No observations available for this period yet." }}</p>
+        </div>
       } @else {
         <div class="chart-surface history-surface">
         <div class="plot" (pointerleave)="hoveredIndex.set(null)"><div class="y-axis" aria-hidden="true">@for (grid of plot().gridlines; track grid.value) {
@@ -71,9 +78,10 @@
           </tbody></table></div>
         </details>
       }
+      </div>
       @if (activeGeneratedAt() && !isActiveError() && !isActiveLoading()) {
 
-        @if (isDelayed()) { <p role="status">History updates are delayed.</p> }
+        @if (isDelayed() || isRefreshError()) { <p role="status">History updates are delayed.</p> }
       }
     </div>
   }
