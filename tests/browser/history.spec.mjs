@@ -48,3 +48,77 @@ test('open history ages without refetching or shifting its chart when periods ch
   await expect(chart.locator('path.series')).toHaveAttribute('d', path);
   expect(historyRequests).toBe(3);
 });
+
+test('recent charts do not wait for yearly data and yearly freshness uses its own timestamp', async ({ page }) => {
+  const now = new Date('2026-11-01T12:00:00Z');
+  await page.clock.install({ time: now });
+  await page.route('**/api/ranking-v2', route => route.fulfill({ json: {
+    updatedAt: now.toISOString(), isStale: false, airborneCount: 3, positions: [],
+    airlines: [], unassignedAircraft: { count: 3, aircraftTypes: [{ name: 'Unknown', count: 3 }] },
+  } }));
+  let releaseYear;
+  const yearReady = new Promise(resolve => { releaseYear = resolve; });
+  await page.route('**/api/history/v1/**', async route => {
+    const url = route.request().url();
+    if (url.endsWith('/year.json')) {
+      await yearReady;
+      await route.fulfill({ json: {
+        schemaVersion: 1, generatedAt: '2026-11-01T09:00:00.000Z', daily: [{
+          time: Date.parse('2026-10-31T00:00:00Z'), end: Date.parse('2026-11-01T00:00:00Z'),
+          samples: 96, expected: 96, isPartial: false, isCovered: true,
+          total: 3, operators: {}, aircraftTypes: {},
+        }],
+      } });
+      return;
+    }
+    await route.fulfill({ json: url.endsWith('/index.json')
+      ? { schemaVersion: 1, generatedAt: now.toISOString(), days: ['2026-11-01'] }
+      : { schemaVersion: 1, date: '2026-11-01', times: ['2026-11-01T11:50:00.000Z'], totals: [3], operators: {}, aircraftTypes: {} },
+    });
+  });
+  await page.goto('/');
+  const chart = page.locator('app-history-chart').first();
+  await chart.getByRole('button', { name: /Airborne history/ }).click();
+  try {
+    await expect(chart.locator('svg')).toBeVisible();
+    await expect(chart.getByText('History updates are delayed.')).toHaveCount(0);
+    await chart.getByRole('button', { name: '1 year', exact: true }).click();
+    await expect(chart.getByText('Loading history…')).toBeVisible();
+  } finally {
+    releaseYear();
+  }
+  await expect(chart.locator('svg')).toBeVisible();
+  await expect(chart.getByText('History updates are delayed.')).toBeVisible();
+  await chart.getByRole('button', { name: '24 hours', exact: true }).click();
+  await expect(chart.getByText('History updates are delayed.')).toHaveCount(0);
+});
+
+test('yearly history remains usable when recent history fails', async ({ page }) => {
+  const now = new Date('2026-11-01T12:00:00Z');
+  await page.clock.install({ time: now });
+  await page.route('**/api/ranking-v2', route => route.fulfill({ json: {
+    updatedAt: now.toISOString(), isStale: false, airborneCount: 3, positions: [],
+    airlines: [], unassignedAircraft: { count: 3, aircraftTypes: [] },
+  } }));
+  await page.route('**/api/history/v1/**', route => {
+    if (!route.request().url().endsWith('/year.json')) {
+      return route.fulfill({ status: 503, body: 'Unavailable' });
+    }
+    return route.fulfill({ json: {
+      schemaVersion: 1, generatedAt: '2026-11-01T09:00:00.000Z', daily: [{
+        time: Date.parse('2026-10-31T00:00:00Z'), end: Date.parse('2026-11-01T00:00:00Z'),
+        samples: 96, expected: 96, isPartial: false, isCovered: true,
+        total: 3, operators: {}, aircraftTypes: {},
+      }],
+    } });
+  });
+  await page.goto('/');
+  const chart = page.locator('app-history-chart').first();
+  await chart.getByRole('button', { name: /Airborne history/ }).click();
+  await expect(chart.getByText('History is temporarily unavailable.')).toBeVisible();
+  await chart.getByRole('button', { name: '1 year', exact: true }).click();
+  await expect(chart.locator('svg')).toBeVisible();
+  await expect(chart.getByText('History updates are delayed.')).toBeVisible();
+  await chart.getByRole('button', { name: '24 hours', exact: true }).click();
+  await expect(chart.getByText('History is temporarily unavailable.')).toBeVisible();
+});

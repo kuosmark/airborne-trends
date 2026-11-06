@@ -12,9 +12,9 @@
         <button type="button" [attr.aria-pressed]="period() === 365" (click)="selectPeriod(365)">1 year</button>
       </div>
       <p class="history-resolution">{{ resolution() }}</p>
-      @if (isLoading()) {
+      @if (isActiveLoading()) {
         <p role="status">Loading history…</p>
-      } @else if (isError() || (period() === 365 && isYearError())) {
+      } @else if (isActiveError()) {
         <p role="status">History is temporarily unavailable.</p>
         <button class="retry" type="button" (click)="load()">Try again</button>
       } @else if (points().length === 0) {
@@ -71,7 +71,7 @@
           </tbody></table></div>
         </details>
       }
-      @if (generatedAt() && !isError() && !isLoading()) {
+      @if (activeGeneratedAt() && !isActiveError() && !isActiveLoading()) {
 
         @if (isDelayed()) { <p role="status">History updates are delayed.</p> }
       }
