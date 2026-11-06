@@ -33,7 +33,7 @@ export class HistoryChartComponent implements OnDestroy {
     : this.period() === 7 ? Math.floor(this.until() / HOUR_MS) * HOUR_MS - 167 * HOUR_MS
     : this.until() - DAY_MS);
   readonly interval = computed(() => this.period() === 1 ? SAMPLE_MS : this.period() === 7 ? HOUR_MS : DAY_MS);
-  readonly resolution = computed(() => this.period() === 1 ? '15-minute observations' : this.period() === 7 ? 'Hourly averages' : 'Daily averages · UTC');
+  readonly resolution = computed(() => this.period() === 1 ? 'Recorded every 15 minutes' : this.period() === 7 ? 'Hourly averages' : 'Daily averages · UTC');
   readonly dateTimezone = computed(() => this.period() >= 30 ? 'UTC' : undefined);
   readonly rawPoints = computed(() => historyPoints(this.days(), this.dimension(), this.groupId(), this.since(), this.until()));
   readonly summaries = computed(() => this.period() === 1 ? [] : this.period() === 365 && this.year() ? (this.year()?.daily ?? []).filter(bucket => bucket.time >= this.since()) : this.days().flatMap(day => {
