@@ -112,7 +112,7 @@
   }
 </section>
 
-@if (!selectedClass() && !selectedEngineCount() && unknownGroup(); as unassigned) {
+@if (!searchQuery().trim() && !selectedClass() && !selectedEngineCount() && unknownGroup(); as unassigned) {
   @if (unassigned.count > 0) {
     @let isExpanded = expandedGroupId() === 'unassigned';
     <section #row [attr.aria-label]="unknownLabel()" class="unassigned-row" data-id="unassigned" [class.is-expanded]="isExpanded">

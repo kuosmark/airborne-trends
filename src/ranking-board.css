@@ -325,8 +325,8 @@ li:last-child {
 @media (max-width: 480px) {
   :host {
     --row-padding-inline: 12px;
-    --row-change-width: 40px;
-    --row-rank-width: 38px;
+    --row-change-width: 36px;
+    --row-rank-width: 30px;
     --row-column-gap: 6px;
     --drawer-inset: calc(var(--row-padding-inline) + var(--row-change-width) + var(--row-column-gap));
   }
@@ -342,7 +342,7 @@ li:last-child {
   }
 
   .rank {
-    padding-right: 12px;
+    padding-right: 4px;
   }
 
   .airline-name {

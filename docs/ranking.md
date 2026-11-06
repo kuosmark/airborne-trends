@@ -14,10 +14,10 @@ The Filters panel starts closed and retains its open/closed state when switching
 - Selecting a different category clears an incompatible engine selection. Search combines with both filters; ranks and rank changes remain global.
 - Changing either filter resets pagination and closes the aircraft drawer. Switching ranking views clears search and selections. Reset filters clears all three, including while the panel is closed.
 - Collapsing the panel preserves selections and shows their summary. The Filters button counts active category and engine restrictions, excluding search.
-- Unknown type is shown only with All aircraft and Any engine count. Category or engine filtering hides it; search alone does not filter the separate Unknown section.
+- Unknown type is shown only with All aircraft, Any engine count and an empty search. Both Unknown sections are hidden during search.
 - With a filter or search, the aircraft total sums all matching ranking rows, including those beyond the visible page. With neither, it shows the full snapshot total, including unidentified aircraft. Operator search follows the same total-count rule.
 
-Search keeps a stable width when result counts change. Result counts and snapshot age sit above the ranking. The timestamp aligns right beside the counts when space permits and left below them when it wraps, consistently in both views. Reset filters reserves its space when inactive so appearing/disappearing does not move the table.
+Search keeps a stable width when result counts change. Result counts and snapshot age sit above the ranking. The timestamp aligns right beside the counts when space permits and left below them when it wraps, consistently in both views. On desktop, Reset filters reserves its space when inactive; on mobile, the inactive button is removed to avoid an empty row.
 
 ### Search and pagination
 
@@ -35,11 +35,11 @@ If an update fails, the last successful ranking and its original timestamp remai
 
 ## Operator details
 
-A separate expandable **Unknown operator** card below the ranked table contains airborne aircraft without a usable operator callsign. It remains visible during search and before all operator rows are loaded, has no rank or movement, and opens the same type breakdown and map without operator metadata. It is omitted when empty.
+A separate expandable **Unknown operator** card below the ranked table contains airborne aircraft without a usable operator callsign. It is hidden during search and remains available before all operator rows are loaded, has no rank or movement, and opens the same type breakdown and map without operator metadata. It is omitted when empty.
 
 Click an airline to expand its aircraft-type breakdown; only one row is expanded at a time. Opening or closing a drawer preserves the clicked row’s screen position during the animation unless the user starts scrolling or interacting again.
 
-Labeled Country, ICAO and IATA fields appear at the top of the drawer and close with it. They use one row when the drawer has enough room and three stacked rows otherwise. Drawer sections and the map share a consistent left edge at every screen width. Above mobile widths, that edge aligns with the operator name; mobile drawers use a smaller inset derived from the row columns to leave more room for their content.
+Labeled Country, ICAO and IATA fields appear at the top of the drawer and close with it. They use one row when the drawer has enough room and three stacked rows otherwise. Drawer sections and the map share a consistent left edge at every screen width. Above mobile widths, that edge aligns with the operator name; mobile drawer content uses equal 20px side padding, while row headings retain the same padding whether open or closed.
 
 Country flags use ADSBDB’s two-letter country ISO codes; emoji rendering varies by platform. Missing metadata fields show “Unavailable”. This is the country supplied by the airline directory, not the aircraft’s current location. Operators displayed as prefixes include a “Name unavailable” hint. Expanded rows use a pale green background; hovering a closed row uses neutral gray.
 
@@ -87,8 +87,8 @@ and can be expanded.
 Unknown type contains airborne aircraft whose type is missing
 or could not be matched to a specific ICAO aircraft type. This includes generic
 descriptions for which neither code/name matching nor the ICAO24 fallback provides a specific type. These aircraft remain included in the total and have their own expandable
-operator breakdown and map outside the ranked list; the section remains visible
-during search and is omitted when empty. Both rankings reconcile to the same
+operator breakdown and map outside the ranked list; the section is hidden
+during search or category/engine filtering and is omitted when empty. Both rankings reconcile to the same
 total, even when positions are missing.
 
 Type rank changes use a separate previous-snapshot comparison; the first

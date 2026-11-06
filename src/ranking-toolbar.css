@@ -194,10 +194,19 @@
   color: #515e58;
 }
 @media (max-width: 700px) {
+  .reset-filters.is-inactive {
+    display: none;
+  }
   .filter-toggle {
     align-self: flex-start;
   }
   .filter-panel {
     padding: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron::before {
+    transition: none;
   }
 }

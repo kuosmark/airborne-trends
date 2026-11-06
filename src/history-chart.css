@@ -81,7 +81,7 @@ circle {
 .axis-labels {
   position: relative;
   height: 24px;
-  margin-left: 52px;
+  margin-left: 60px;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -152,7 +152,7 @@ tbody tr:last-child td {
 .plot {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
-  gap: 8px;
+  gap: 16px;
 }
 .y-axis {
   position: relative;
@@ -231,10 +231,10 @@ tbody tr:last-child td {
   }
   .plot {
     grid-template-columns: 36px minmax(0, 1fr);
-    gap: 6px;
+    gap: 12px;
   }
   .axis-labels {
-    margin-left: 42px;
+    margin-left: 48px;
     font-size: 11px;
   }
 }
