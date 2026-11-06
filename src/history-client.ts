@@ -1,3 +1,4 @@
+import { isHistoryYear, type HistoryYear } from '../shared/history-summary.ts';
 import { DAY_MS, isHistoryDay, isHistoryIndex, type HistoryDay, type HistoryIndex } from '../shared/history-chart.ts';
 async function readJson(path: string, signal: AbortSignal): Promise<unknown> {
   const response = await fetch(path, { signal });
@@ -16,4 +17,13 @@ export async function loadHistory(days: number, signal: AbortSignal, now = Date.
     return day;
   }));
   return { index, days: data };
+}
+
+export async function loadHistoryYear(signal: AbortSignal): Promise<HistoryYear | null> {
+  const response = await fetch('/api/history/v1/year.json', { signal });
+  if (response.status === 404) { return null; }
+  if (!response.ok) { throw new Error('Year history unavailable'); }
+  const year: unknown = await response.json();
+  if (!isHistoryYear(year)) { throw new Error('Invalid history year'); }
+  return year;
 }

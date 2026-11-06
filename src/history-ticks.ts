@@ -1,5 +1,19 @@
 export function historyTicks(since: number, until: number, days: number): number[] {
   const ticks: number[] = [];
+  if (days === 365) {
+    const date = new Date(since);
+    let tick = Date.UTC(date.getUTCFullYear(), Math.ceil(date.getUTCMonth() / 3) * 3, 1);
+    while (tick <= until) {
+      if (tick >= since) { ticks.push(tick); }
+      const current = new Date(tick);
+      tick = Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 3, 1);
+    }
+    return ticks;
+  }
+  if (days === 30) {
+    for (let time = Math.ceil(since / 86_400_000) * 86_400_000; time <= until; time += 7 * 86_400_000) { ticks.push(time); }
+    return ticks;
+  }
   const date = new Date(since);
   date.setMinutes(0, 0, 0);
   if (days === 1) {

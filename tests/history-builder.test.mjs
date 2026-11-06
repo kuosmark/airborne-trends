@@ -17,11 +17,11 @@ function storage() {
   s3.send=async command=>{
     const input=command.input;
     switch(command.constructor.name) {
-      case 'ListObjectsV2Command': return { Contents:input.Bucket==='state'
+      case 'ListObjectsV2Command': if (input.Delimiter) { return {CommonPrefixes:[{Prefix:'history/counts/v1/2026-10-30/'}]}; } return { Contents:input.Bucket==='state'
         ? (source.Key.startsWith(input.Prefix)?[source]:[])
         : [...files.keys()].filter(key=>key.startsWith(input.Prefix)).map(Key=>({Key})) };
       case 'HeadObjectCommand': return {Metadata:files.get(input.Key).Metadata};
-      case 'GetObjectCommand': reads++; return {Body:{transformToByteArray:async()=>gzipSync(JSON.stringify(isMalformed?{}:observation))}};
+      case 'GetObjectCommand': if (input.Bucket === 'web') { return {Body:{transformToByteArray:async()=>files.get(input.Key).Body}}; } reads++; return {Body:{transformToByteArray:async()=>gzipSync(JSON.stringify(isMalformed?{}:observation))}};
       case 'PutObjectCommand':
         if(isFailing && input.Key.endsWith('2026-10-30.json'))throw new Error('storage failed');
         files.set(input.Key,input);return {};
@@ -35,7 +35,7 @@ test('builder caches unchanged days and rebuilds changed sources, publishing ind
   const store=storage();
   await buildRecentHistory(store.s3,'state','web',now);
   assert.equal(store.reads(),1);
-  assert.deepEqual([...store.files.keys()],['api/history/v1/2026-10-30.json','api/history/v1/index.json']);
+  assert.deepEqual([...store.files.keys()],['api/history/v1/2026-10-30.json','api/history/v1/year.json','api/history/v1/index.json']);
   const index=JSON.parse(gunzipSync(store.files.get('api/history/v1/index.json').Body));
   assert.deepEqual(index.days,['2026-10-30']);
   await buildRecentHistory(store.s3,'state','web',now);
@@ -72,4 +72,31 @@ test('builder includes the oldest UTC date needed for 30 days and excludes older
   await buildRecentHistory(store.s3, 'state', 'web', now + 31 * 86400000);
   assert.deepEqual(readIndex().days, []);
   store.s3.destroy();
+});
+
+test('year output retains older summaries and is published before the recent index',async()=>{
+  const store=storage();
+  await buildRecentHistory(store.s3,'state','web',now);
+  const readYear=()=>JSON.parse(gunzipSync(store.files.get('api/history/v1/year.json').Body));
+  assert.equal(readYear().daily.length,1);
+  await buildRecentHistory(store.s3,'state','web',now+32*86400000);
+  assert.equal(readYear().daily.length,1);
+  assert.equal(readYear().daily[0].time,Date.parse('2026-10-30T00:00Z'));
+  await buildRecentHistory(store.s3,'state','web',now+365*86400000);
+  assert.equal(readYear().daily.length,0);
+  store.s3.destroy();
+});
+
+test('bootstrap and an interrupted yearly publisher recover archive dates older than the recent window',async()=>{
+  for(const isExisting of [false,true]) {
+    const store=storage();
+    if(isExisting)store.files.set('api/history/v1/year.json',{Body:gzipSync(JSON.stringify({schemaVersion:1,generatedAt:'2026-10-01T00:00:00.000Z',daily:[]}))});
+    await buildRecentHistory(store.s3,'state','web',now+40*86400000);
+    const year=JSON.parse(gunzipSync(store.files.get('api/history/v1/year.json').Body));
+    assert.equal(year.daily.length,1);
+    assert.equal(year.daily[0].time,Date.parse('2026-10-30T00:00Z'));
+    const index=JSON.parse(gunzipSync(store.files.get('api/history/v1/index.json').Body));
+    assert.deepEqual(index.days,[]);
+    store.s3.destroy();
+  }
 });

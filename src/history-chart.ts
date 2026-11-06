@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input, type OnDestroy, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { HOUR_MS, SAMPLE_MS, summarizeHistoryDay, summaryPoints, type HistoryYear, type SummaryPoint } from '../shared/history-summary';
 import { DAY_MS, historyPoints, type HistoryDay } from '../shared/history-chart';
-import { loadHistory } from './history-client';
+import { loadHistory, loadHistoryYear } from './history-client';
 import { formatSnapshotAge } from './snapshot-age';
 import { historyTicks } from './history-ticks';
 import { nearestHistoryPoint, plotHistory } from './history-plot';
@@ -22,22 +23,39 @@ export class HistoryChartComponent implements OnDestroy {
   readonly isError = signal(false);
   readonly days = signal<HistoryDay[]>([]);
   readonly generatedAt = signal('');
+  readonly year = signal<HistoryYear | null>(null);
+  readonly isYearError = signal(false);
   readonly until = signal(Date.now());
   private readonly now = signal(Date.now());
   private clock?: ReturnType<typeof setInterval>;
-  readonly since = computed(() => this.until() - this.period() * DAY_MS);
+  readonly since = computed(() => this.period() >= 30
+    ? Math.floor(this.until() / DAY_MS) * DAY_MS - (this.period() - 1) * DAY_MS
+    : this.period() === 7 ? Math.floor(this.until() / HOUR_MS) * HOUR_MS - 167 * HOUR_MS
+    : this.until() - DAY_MS);
+  readonly interval = computed(() => this.period() === 1 ? SAMPLE_MS : this.period() === 7 ? HOUR_MS : DAY_MS);
+  readonly resolution = computed(() => this.period() === 1 ? '15-minute observations' : this.period() === 7 ? 'Hourly averages' : 'Daily averages · UTC');
+  readonly dateTimezone = computed(() => this.period() >= 30 ? 'UTC' : undefined);
+  readonly rawPoints = computed(() => historyPoints(this.days(), this.dimension(), this.groupId(), this.since(), this.until()));
+  readonly summaries = computed(() => this.period() === 1 ? [] : this.period() === 365 && this.year() ? (this.year()?.daily ?? []).filter(bucket => bucket.time >= this.since()) : this.days().flatMap(day => {
+    const cached = this.period() === 7 ? day.summaries?.hourly : day.summaries?.daily;
+    return cached ?? summarizeHistoryDay(day, this.interval(), Math.min(this.until(), Date.parse(this.generatedAt()) || this.until()));
+  }).filter(bucket => bucket.time >= this.since() && bucket.time < this.until()));
+  readonly hasCoverageNotice = computed(() => this.summaries().some(bucket => !bucket.isCovered || bucket.samples < bucket.expected || bucket.isPartial));
   readonly ticks = computed(() => historyTicks(this.since(), this.until(), this.period()));
-  readonly updatedAge = computed(() => formatSnapshotAge(this.generatedAt(), this.now()));
+  readonly updatedAge = computed(() => formatSnapshotAge(this.period() === 365 ? (this.year()?.generatedAt ?? this.generatedAt()) : this.generatedAt(), this.now()));
   readonly availableSince = computed(() => {
-    const first = this.points()[0]?.time;
-    return first && first - this.since() > 22.5 * 60_000 ? first : null;
+    const first = this.days().flatMap(day => day.times).sort()[0];
+    const time = this.period() === 365 && this.year()?.daily.length ? this.year()?.daily[0].time : first ? Date.parse(first) : null;
+    return time && time > this.since() ? time : null;
   });
-  readonly points = computed(() => historyPoints(this.days(), this.dimension(), this.groupId(), this.since(), this.until()));
+  readonly points = computed<SummaryPoint[]>(() => this.period() === 1 ? this.rawPoints()
+    : summaryPoints(this.summaries(), this.dimension(), this.groupId()));
   readonly referenceMaximum = computed(() => {
     const points = historyPoints(this.days(), this.dimension(), this.groupId(), this.until() - 30 * DAY_MS, this.until());
-    return Math.max(0, ...points.map(point => point.count));
+    const daily = summaryPoints(this.year()?.daily ?? [], this.dimension(), this.groupId());
+    return Math.max(0, ...points.map(point => point.count), ...daily.map(point => point.count));
   });
-  readonly plot = computed(() => plotHistory(this.points(), this.since(), this.until(), this.referenceMaximum()));
+  readonly plot = computed(() => plotHistory(this.points(), this.since(), this.until(), this.referenceMaximum(), this.interval()));
   readonly isDelayed = computed(() => !!this.generatedAt() && this.now() - Date.parse(this.generatedAt()) > 2 * 60 * 60_000);
   readonly hoveredIndex = signal<number | null>(null);
   readonly hoveredPoint = computed(() => {
@@ -58,6 +76,15 @@ export class HistoryChartComponent implements OnDestroy {
     const time = this.since() + fraction * (this.until() - this.since());
     this.hoveredIndex.set(nearestHistoryPoint(this.points(), time));
   }
+  selectWithKeyboard(event: KeyboardEvent): void {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Escape'].includes(event.key)) { return; }
+    event.preventDefault();
+    const last = this.points().length - 1;
+    if (last < 0 || event.key === 'Escape') { this.hoveredIndex.set(null); return; }
+    const current = this.hoveredIndex() ?? (event.key === 'ArrowLeft' ? last + 1 : -1);
+    this.hoveredIndex.set(event.key === 'Home' ? 0 : event.key === 'End' ? last
+      : Math.max(0, Math.min(last, current + (event.key === 'ArrowLeft' ? -1 : 1))));
+  }
   private abort?: AbortController;
   toggle(): void {
     this.isOpen.update(value => !value);
@@ -70,6 +97,7 @@ export class HistoryChartComponent implements OnDestroy {
   selectPeriod(days: number): void {
     if (this.period() === days) { return; }
     this.period.set(days);
+    if (days === 365 && !this.year() && !this.isLoading()) { void this.load(); }
     this.hoveredIndex.set(null);
   }
   async load(): Promise<void> {
@@ -82,8 +110,14 @@ export class HistoryChartComponent implements OnDestroy {
     this.now.set(Date.now());
     this.until.set(this.now());
     try {
-      const result = await loadHistory(30, AbortSignal.any([abort.signal, AbortSignal.timeout(15_000)]), this.until());
-      if (!abort.signal.aborted) { this.days.set(result.days); this.generatedAt.set(result.index.generatedAt); }
+      const requestSignal = AbortSignal.any([abort.signal, AbortSignal.timeout(15_000)]);
+      const [result, year] = await Promise.all([loadHistory(30, requestSignal, this.until()), loadHistoryYear(requestSignal).catch(() => null)]);
+      if (!abort.signal.aborted) {
+        this.days.set(result.days);
+        this.generatedAt.set(result.index.generatedAt);
+        this.year.set(year);
+        this.isYearError.set(year === null);
+      }
     } catch {
       if (!abort.signal.aborted) { this.isError.set(true); }
     } finally {
