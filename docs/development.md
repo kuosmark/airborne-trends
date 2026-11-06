@@ -42,7 +42,7 @@ Run `npm run check` before committing. GitHub Actions runs the same command plus
 | `npm run typecheck:scripts` | Type-check reference updater scripts |
 | `npm run typecheck:backend` | Type-check the backend and shared ranking types |
 | `npm test` | Test ranking, caching, provider cost controls, HTTP behavior, scheduled refreshes, infrastructure and release safeguards |
-| `npm run test:browser` | Run the aircraft-filter interaction flow in Chromium at 320px, 390px and desktop widths |
+| `npm run test:browser` | Run ranking, history and responsive interaction checks in Chromium at 320px, 390px and desktop widths |
 | `npm run build` | Build the frontend into `dist/airline-ranking/browser` |
 | `npm run typecheck:infra` | Type-check the CDK application |
 | `npm run infra:synth` | Bundle Lambda and validate the generated CloudFormation template without AWS lookups |
@@ -63,4 +63,4 @@ The map uses a bundled Natural Earth 1:110m land outline, projected with `d3-geo
 
 The local provider backend does not collect or serve history. Without published history files, charts show the unavailable state while live rankings continue. To develop against existing data without provider requests, serve a saved ranking and generated history JSON from a local static preview, or point the Angular proxy at an existing deployment. Keep downloaded archives and preview data untracked. Use synthetic records for automated tests; do not change timestamps on real observations to make them appear current.
 
-History tests cover projection, missing samples, zero counts, malformed data, unchanged-day caching, partial publication failure and recovery. A multi-day integration test follows saved counts through publication, HTTP loading and chart points, including paginated archive listings and delayed sample recovery. Browser checks should include all three periods, total and group charts, exact-value tables, empty/error states and narrow layouts.
+History tests cover projection, missing samples, zero counts, malformed data, unchanged-day caching, partial publication failure and recovery. A multi-day integration test follows saved counts through publication, HTTP loading and chart points, including paginated archive listings and delayed sample recovery. Browser checks should include all four periods, total and group charts, exact-value tables, empty/error states and narrow layouts. Verify that a slow or unavailable yearly file does not block recent charts, and that delay warnings use the selected dataset’s update time.

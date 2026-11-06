@@ -169,3 +169,14 @@ test('S3 archive is compressed, private-bucket targeted and conditional on absen
     else await assert.rejects(write);
   }
 });
+
+test('late scheduled observations remain buildable across an interval boundary', async () => {
+  const { buildHistoryDay } = await import('../backend/history-builder.ts');
+  const slot = Math.floor(start / REFRESH_INTERVAL_MS);
+  const record = createHistoryRecord(snapshot(start + REFRESH_INTERVAL_MS), slot, reference);
+  assert.equal(isHistoryRecord(record), true);
+  const day = buildHistoryDay(record.observedAt.slice(0, 10), [record]);
+  assert.deepEqual(day.slots, [slot]);
+  assert.deepEqual(day.times, [record.observedAt]);
+  assert.deepEqual(day.totals, [3]);
+});

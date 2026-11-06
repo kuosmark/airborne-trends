@@ -25,6 +25,9 @@ export class HistoryChartComponent implements OnDestroy {
   readonly generatedAt = signal('');
   readonly year = signal<HistoryYear | null>(null);
   readonly isYearError = signal(false);
+  readonly isYearLoading = signal(false);
+  readonly isActiveLoading = computed(() => this.period() === 365 ? this.isYearLoading() : this.isLoading());
+  readonly isActiveError = computed(() => this.period() === 365 ? this.isYearError() : this.isError());
   readonly until = signal(Date.now());
   private readonly now = signal(Date.now());
   private clock?: ReturnType<typeof setInterval>;
@@ -42,7 +45,8 @@ export class HistoryChartComponent implements OnDestroy {
   }).filter(bucket => bucket.time >= this.since() && bucket.time < this.until()));
   readonly hasCoverageNotice = computed(() => this.summaries().some(bucket => !bucket.isCovered || bucket.samples < bucket.expected || bucket.isPartial));
   readonly ticks = computed(() => historyTicks(this.since(), this.until(), this.period()));
-  readonly updatedAge = computed(() => formatSnapshotAge(this.period() === 365 ? (this.year()?.generatedAt ?? this.generatedAt()) : this.generatedAt(), this.now()));
+  readonly activeGeneratedAt = computed(() => this.period() === 365 ? (this.year()?.generatedAt ?? '') : this.generatedAt());
+  readonly updatedAge = computed(() => formatSnapshotAge(this.activeGeneratedAt(), this.now()));
   readonly availableSince = computed(() => {
     const first = this.days().flatMap(day => day.times).sort()[0];
     const time = this.period() === 365 && this.year()?.daily.length ? this.year()?.daily[0].time : first ? Date.parse(first) : null;
@@ -56,7 +60,7 @@ export class HistoryChartComponent implements OnDestroy {
     return Math.max(0, ...points.map(point => point.count), ...daily.map(point => point.count));
   });
   readonly plot = computed(() => plotHistory(this.points(), this.since(), this.until(), this.referenceMaximum(), this.interval()));
-  readonly isDelayed = computed(() => !!this.generatedAt() && this.now() - Date.parse(this.generatedAt()) > 2 * 60 * 60_000);
+  readonly isDelayed = computed(() => !!this.activeGeneratedAt() && this.now() - Date.parse(this.activeGeneratedAt()) > 2 * 60 * 60_000);
   readonly hoveredIndex = signal<number | null>(null);
   readonly hoveredPoint = computed(() => {
     const index = this.hoveredIndex();
@@ -97,7 +101,7 @@ export class HistoryChartComponent implements OnDestroy {
   selectPeriod(days: number): void {
     if (this.period() === days) { return; }
     this.period.set(days);
-    if (days === 365 && !this.year() && !this.isLoading()) { void this.load(); }
+    if (days === 365 && !this.year() && !this.isLoading() && !this.isYearLoading()) { void this.load(); }
     this.hoveredIndex.set(null);
   }
   async load(): Promise<void> {
@@ -107,16 +111,22 @@ export class HistoryChartComponent implements OnDestroy {
     this.abort = abort;
     this.isLoading.set(true);
     this.isError.set(false);
+    this.isYearLoading.set(true);
+    this.isYearError.set(false);
     this.now.set(Date.now());
     this.until.set(this.now());
     try {
       const requestSignal = AbortSignal.any([abort.signal, AbortSignal.timeout(15_000)]);
-      const [result, year] = await Promise.all([loadHistory(30, requestSignal, this.until()), loadHistoryYear(requestSignal).catch(() => null)]);
+      void loadHistoryYear(requestSignal).catch(() => null).then(year => {
+        if (abort.signal.aborted) { return; }
+        this.year.set(year);
+        this.isYearError.set(year === null);
+        this.isYearLoading.set(false);
+      });
+      const result = await loadHistory(30, requestSignal, this.until());
       if (!abort.signal.aborted) {
         this.days.set(result.days);
         this.generatedAt.set(result.index.generatedAt);
-        this.year.set(year);
-        this.isYearError.set(year === null);
       }
     } catch {
       if (!abort.signal.aborted) { this.isError.set(true); }
