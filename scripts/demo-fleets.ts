@@ -36,6 +36,21 @@ export const fleets: Fleet[] = [
     utilization: (hour, _weekend, summer) => 0.06 + (0.50 + 0.30 * summer) * peak(hour, 12, 3.4) },
 ];
 
+// Stable samples keep the ranking, maps and charts consistent for a given time.
+export function sampleFraction(bucket: number, seed: number): number {
+  let bits = Math.imul(bucket, 0x45d9f3b) ^ seed;
+  bits = Math.imul(bits ^ (bits >>> 16), 0x45d9f3b);
+  return ((bits ^ (bits >>> 16)) >>> 0) / 0x100000000;
+}
+
+function variation(position: number, seed: number): number {
+  const bucket = Math.floor(position);
+  const fraction = position - bucket;
+  const start = sampleFraction(bucket, seed);
+  const end = sampleFraction(bucket + 1, seed);
+  return 2 * (start + (end - start) * fraction) - 1;
+}
+
 export function sampleFleets(time: number) {
   const date = new Date(time);
   const hour = date.getUTCHours() + date.getUTCMinutes() / 60;
@@ -43,8 +58,18 @@ export function sampleFleets(time: number) {
   const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1);
   const day = (time - yearStart) / 86_400_000;
   const summer = (1 + Math.cos((day - 196) * 2 * Math.PI / 365.25)) / 2;
-  return fleets.flatMap((fleet, fleetIndex) => Object.entries(fleet.types).map(([type, size], typeIndex) => {
-    const utilization = fleet.utilization((hour + typeIndex * 0.45) % 24, isWeekend, summer);
-    return { fleet, fleetIndex, type, typeIndex, count: Math.round(utilization * size) };
-  }));
+  const hours = time / 3_600_000;
+  return fleets.flatMap((fleet, fleetIndex) => {
+    const seed = Math.imul(fleetIndex + 1, 0x9e3779b1);
+    const scheduleShift = 1.25 * variation(hours / 13, seed);
+    const dailyDemand = 1 + 0.28 * variation(hours / 29, seed);
+    return Object.entries(fleet.types).map(([type, size], typeIndex) => {
+      const scheduleHour = (hour + scheduleShift + typeIndex * 0.45 + 24) % 24;
+      const usualActivity = fleet.utilization(scheduleHour, isWeekend, summer);
+      const localFluctuation = variation(hours / 1.25, seed + (typeIndex + 1) * 7919);
+      const active = size * usualActivity * dailyDemand + Math.sqrt(size * usualActivity) * localFluctuation;
+      const count = Math.min(size, Math.max(0, Math.round(active)));
+      return { fleet, fleetIndex, type, typeIndex, count };
+    });
+  });
 }
