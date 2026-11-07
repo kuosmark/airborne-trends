@@ -45,10 +45,23 @@ export class HistoryChartComponent implements OnDestroy {
   readonly resolution = computed(() => this.period() === 1 ? 'Recorded every 15 minutes' : this.period() === 7 ? 'Hourly averages' : 'Daily averages · UTC');
   readonly dateTimezone = computed(() => this.period() >= 30 ? 'UTC' : undefined);
   readonly rawPoints = computed(() => historyPoints(this.days(), this.dimension(), this.groupId(), this.since(), this.until()));
-  readonly summaries = computed(() => this.period() === 1 ? [] : this.period() === 365 && this.year() ? (this.year()?.daily ?? []).filter(bucket => bucket.time >= this.since()) : this.days().flatMap(day => {
-    const cached = this.period() === 7 ? day.summaries?.hourly : day.summaries?.daily;
-    return cached ?? summarizeHistoryDay(day, this.interval(), Math.min(this.until(), Date.parse(this.generatedAt()) || this.until()));
-  }).filter(bucket => bucket.time >= this.since() && bucket.time < this.until()));
+  readonly summaries = computed(() => {
+    const period = this.period();
+    if (period === 1) { return []; }
+
+    if (period === 365) {
+      const year = this.year();
+      if (year) { return year.daily.filter(bucket => bucket.time >= this.since()); }
+    }
+
+    const until = this.until();
+    const observedUntil = Math.min(until, Date.parse(this.generatedAt()) || until);
+    const buckets = this.days().flatMap(day => {
+      const cached = period === 7 ? day.summaries?.hourly : day.summaries?.daily;
+      return cached ?? summarizeHistoryDay(day, this.interval(), observedUntil);
+    });
+    return buckets.filter(bucket => bucket.time >= this.since() && bucket.time < until);
+  });
   readonly hasCoverageNotice = computed(() => this.summaries().some(bucket => !bucket.isCovered || bucket.samples < bucket.expected || bucket.isPartial));
   readonly ticks = computed(() => historyTicks(this.since(), this.until(), this.period()));
   readonly activeGeneratedAt = computed(() => this.period() === 365 ? (this.year()?.generatedAt ?? '') : this.generatedAt());
