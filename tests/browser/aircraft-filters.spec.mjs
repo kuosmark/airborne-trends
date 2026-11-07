@@ -89,7 +89,7 @@ test('snapshot age aligns right when it fits and left below counts on narrow scr
   } }));
   await page.goto('/');
   for (const tab of ['Operators', 'Aircraft types']) {
-    await page.getByRole('button', { name: tab, exact: true }).click();
+    await page.getByRole('group', { name: 'Rank aircraft by' }).getByRole('button', { name: tab, exact: true }).click();
     await expect(page.locator('.airborne-total')).toHaveText('4,891 aircraft');
     await expect(page.locator('.search-results')).toHaveText(tab === 'Operators' ? '1 operators' : '1 types');
     await expect.poll(() => page.evaluate(() => {
@@ -120,7 +120,7 @@ test('search hides unknown groups and mobile drawers use balanced space', async 
   } }));
   await page.goto('/');
   for (const [tab, unknownName] of [['Operators', 'Unknown operator'], ['Aircraft types', 'Unknown type']]) {
-    await page.getByRole('button', { name: tab, exact: true }).click();
+    await page.getByRole('group', { name: 'Rank aircraft by' }).getByRole('button', { name: tab, exact: true }).click();
     const unknown = page.getByRole('region', { name: unknownName, exact: true });
     await expect(unknown).toBeVisible();
     await page.getByRole('searchbox').fill('zzzzz');

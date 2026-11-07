@@ -37,7 +37,7 @@ If an update fails, the last successful ranking and its original timestamp remai
 
 A separate expandable **Unknown operator** card below the ranked table contains airborne aircraft without a usable operator callsign. It is hidden during search and remains available before all operator rows are loaded, has no rank or movement, and opens the same type breakdown and map without operator metadata. It is omitted when empty.
 
-Click an airline to expand its aircraft-type breakdown; only one row is expanded at a time. Opening or closing a drawer preserves the clicked row’s screen position during the animation unless the user starts scrolling or interacting again.
+Click an airline to expand its aircraft-type breakdown; only one row is expanded at a time. The **Aircraft types** section in operator drawers and the **Operators** section in aircraft-type drawers start expanded. Each can be collapsed independently. Reopening it within the same drawer preserves the number of rows shown. Opening or closing a drawer preserves the clicked row’s screen position during the animation unless the user starts scrolling or interacting again.
 
 Labeled Country, ICAO and IATA fields appear at the top of the drawer and close with it. They use one row when the drawer has enough room and three stacked rows otherwise. Drawer sections and the map share a consistent left edge at every screen width. Above mobile widths, that edge aligns with the operator name; mobile drawer content uses equal 20px side padding, while row headings retain the same padding whether open or closed.
 

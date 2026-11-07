@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 
 @Component({
@@ -10,6 +10,7 @@ import { DecimalPipe } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AircraftBreakdownComponent {
+  readonly isOpen = signal(true);
   readonly count = input.required<number>();
   readonly heading = input.required<string>();
   readonly breakdown = input.required<{ name: string; count: number }[]>();
