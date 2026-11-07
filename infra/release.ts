@@ -66,7 +66,7 @@ export async function releaseBackend(code: Uint8Array, functionArn: string): Pro
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [bucket, distribution, refresh, history] = process.argv.slice(2);
   if (!bucket || !distribution || !refresh) { throw new Error('Provide website bucket, distribution ID and refresh Lambda ARN'); }
-  const website = readWebsiteOutputs({ AirlineRanking: { WebsiteBucket: bucket, DistributionId: distribution } });
+  const website = readWebsiteOutputs({ AirborneTrends: { WebsiteBucket: bucket, DistributionId: distribution } });
   validateFunctionArn(refresh);
   if (history) { validateFunctionArn(history); }
   await releaseBackend(await packageBackend(), refresh);

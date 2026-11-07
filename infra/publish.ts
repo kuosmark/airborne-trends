@@ -8,10 +8,10 @@ import { CloudFrontClient, CreateInvalidationCommand, waitUntilInvalidationCompl
 interface WebsiteOutputs { WebsiteBucket: string; DistributionId: string }
 
 export function readWebsiteOutputs(value: unknown): WebsiteOutputs {
-  if (typeof value !== 'object' || value === null || !('AirlineRanking' in value)) {
-    throw new Error('Missing AirlineRanking deployment outputs');
+  if (typeof value !== 'object' || value === null || !('AirborneTrends' in value)) {
+    throw new Error('Missing AirborneTrends deployment outputs');
   }
-  const outputs = value.AirlineRanking;
+  const outputs = value.AirborneTrends;
   if (typeof outputs !== 'object' || outputs === null ||
       !('WebsiteBucket' in outputs) || !('DistributionId' in outputs)) {
     throw new Error('Invalid website bucket or distribution outputs');

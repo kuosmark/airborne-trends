@@ -11,7 +11,7 @@ import { LambdaClient, GetFunctionConfigurationCommand, UpdateFunctionCodeComman
 import { test } from 'node:test';
 import { packageBackend, releaseBackend, validateFunctionArn } from '../infra/release.ts';
 
-const functionArn = 'arn:aws:lambda:eu-north-1:123456789012:function:AirlineRanking-Refresh';
+const functionArn = 'arn:aws:lambda:eu-north-1:123456789012:function:AirborneTrends-Refresh';
 const code = Buffer.from('test package');
 const configuration = { MemorySize: 512, Runtime: 'nodejs22.x', Handler: 'index.handler', Architectures: ['arm64'],
   RevisionId: 'existing-revision', LastUpdateStatus: 'Successful' };

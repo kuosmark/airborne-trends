@@ -60,7 +60,7 @@ export class DeploymentStack extends Stack {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const projectName = 'airline-ranking-release';
+    const projectName = 'airborne-trends-release';
     const buildRole = new iam.Role(this, 'ReleaseRole', {
       assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com', {
         conditions: {
@@ -158,7 +158,7 @@ export class DeploymentStack extends Stack {
           actions: [new actions.CodeStarConnectionsSourceAction({
             actionName: 'GitHub',
             owner: 'kuosmark',
-            repo: 'airline-ranking',
+            repo: 'airborne-trends',
             branch: 'main',
             connectionArn,
             output: source,
@@ -182,9 +182,9 @@ export class DeploymentStack extends Stack {
       role.addToPrincipalPolicy(new iam.PolicyStatement({
         actions: [`${prefix}:UseConnection`],
         resources: [connectionArn],
-        conditions: { StringEquals: { [`${prefix}:FullRepositoryId`]: 'kuosmark/airline-ranking' } },
+        conditions: { StringEquals: { [`${prefix}:FullRepositoryId`]: 'kuosmark/airborne-trends' } },
       }));
-      for (const [key, value] of [['FullRepositoryId', 'kuosmark/airline-ranking'], ['BranchName', 'main']]) {
+      for (const [key, value] of [['FullRepositoryId', 'kuosmark/airborne-trends'], ['BranchName', 'main']]) {
         role.addToPrincipalPolicy(new iam.PolicyStatement({
           effect: iam.Effect.DENY,
           actions: [`${prefix}:UseConnection`],

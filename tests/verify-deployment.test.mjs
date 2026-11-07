@@ -24,7 +24,7 @@ test('verifies the deployed homepage and compact ranking using only public endpo
   const { calls, logs } = setup(t);
   await verifyDeployment(html);
   assert.deepEqual(calls.map(call => call.url), [
-    'https://airlines.markuskuosmanen.com/', 'https://airlines.markuskuosmanen.com/api/ranking-v2',
+    'https://airborne-trends.markuskuosmanen.com/', 'https://airborne-trends.markuskuosmanen.com/api/ranking-v2',
   ]);
   for (const { options } of calls) {
     assert.equal(options.redirect, 'error');

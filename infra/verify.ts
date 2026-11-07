@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { isSnapshotStale } from '../shared/ranking.ts';
 import { expandSnapshot } from '../shared/snapshot-wire.ts';
 
-const WEBSITE_URL = 'https://airlines.markuskuosmanen.com';
+const WEBSITE_URL = 'https://airborne-trends.markuskuosmanen.com';
 
 async function fetchPublicPage(path: string): Promise<Response> {
   const response = await fetch(`${WEBSITE_URL}${path}`, {

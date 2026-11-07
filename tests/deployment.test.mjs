@@ -22,7 +22,7 @@ test('deployments queue and use only main from the project repository', () => {
   template.hasResourceProperties('AWS::CodePipeline::Pipeline', {
     PipelineType: 'V2', ExecutionMode: 'QUEUED',
     Stages: [Match.objectLike({ Name: 'Source', Actions: [Match.objectLike({
-      Configuration: Match.objectLike({ FullRepositoryId: 'kuosmark/airline-ranking', BranchName: 'main' }),
+      Configuration: Match.objectLike({ FullRepositoryId: 'kuosmark/airborne-trends', BranchName: 'main' }),
     })] }), Match.objectLike({ Name: 'Deploy' })],
   });
 });
@@ -88,7 +88,7 @@ test('only this CodeBuild project may assume the release role', () => {
       },
     })], Version: '2012-10-17' },
   });
-  template.hasResourceProperties('AWS::CodeBuild::Project', { Name: 'airline-ranking-release' });
+  template.hasResourceProperties('AWS::CodeBuild::Project', { Name: 'airborne-trends-release' });
 });
 
 test('deployment roles do not read secrets and direct website writes exclude backend objects', () => {
@@ -113,7 +113,7 @@ test('deployment roles do not read secrets and direct website writes exclude bac
   assert.equal(upload.Resource.length, 3);
   for (const extension of ['html', 'js', 'css']) assert.match(JSON.stringify(upload.Resource), new RegExp(`/\\*\\.${extension}`));
   for (const prefix of ['codeconnections', 'codestar-connections']) {
-    for (const [key, value] of [['FullRepositoryId', 'kuosmark/airline-ranking'], ['BranchName', 'main']]) {
+    for (const [key, value] of [['FullRepositoryId', 'kuosmark/airborne-trends'], ['BranchName', 'main']]) {
       const restriction = statements.find(statement => statement.Effect === 'Deny' && statement.Action === `${prefix}:UseConnection` && statement.Condition.StringNotEquals[`${prefix}:${key}`] === value);
       assert.ok(restriction);
       assert.equal(restriction.Condition.Null[`${prefix}:${key}`], 'false');

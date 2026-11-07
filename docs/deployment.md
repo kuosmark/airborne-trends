@@ -6,7 +6,7 @@
 
 The application stack in `infra/stack.ts` schedules two Lambda functions. The ranking refresh runs every 15 minutes and archives aggregate counts in the private state bucket. The hourly history builder reads those counts and prepares chart files. Both publish to the website bucket, where CloudFront serves the Angular app, rankings and charts. Each function has an error alarm. The separate deployment stack builds and publishes releases from `main`.
 
-Airborne Trends uses the original `AirlineRanking` stack names and `/airline-ranking/` parameter path. The public address is `https://airlines.markuskuosmanen.com`. The stack creates an A alias pointing to the existing distribution in the supplied public hosted zone; it does not create another zone or register the domain. It uses a separately issued, non-exportable ACM certificate in `us-east-1`, as required for global CloudFront HTTPS. Application resources stay in Stockholm. The original CloudFront address remains available as `WebsiteUrl`; `CustomDomainUrl` supplies the custom address.
+Airborne Trends uses the `AirborneTrends` stack names and `/airborne-trends/` parameter path. The configured public address is `https://airborne-trends.markuskuosmanen.com`. The stack creates an A alias pointing to the existing distribution in the supplied public hosted zone; it does not create another zone or register the domain. It uses a separately issued, non-exportable ACM certificate in `us-east-1`, as required for global CloudFront HTTPS. Application resources stay in Stockholm. The original CloudFront address remains available as `WebsiteUrl`; `CustomDomainUrl` supplies the custom address.
 
 Before deploying, finish domain registration and verify any registrant email AWS requests. Add the certificate's DNS validation CNAME to the domain's hosted zone and wait for ACM to show **Issued**. Keep that CNAME for managed renewal. Supply `CertificateArn` and `HostedZoneId` during the first domain deployment; subsequent deployments reuse the existing parameter values. Domain registration, certificate and zone are managed separately from the application stack.
 
@@ -34,7 +34,7 @@ Archive validation/write failures emit fixed `Counts history invalid` or `Counts
 
 ### Enabling history charts
 
-This feature requires both application and deployment-stack updates. From the approved revision, run the checks and review both diffs using the infrastructure procedure below. Deploy `AirlineRanking` first, preserving the existing explicit polling setting, then `AirlineRankingDeployment`. The first stack adds a 512 MB history builder, an hourly schedule, prefix-scoped S3 permissions and an error alarm using the existing alert topic. The second adds the history function to code-only release permissions and commands. No new bucket or database is created.
+This feature requires both application and deployment-stack updates. From the approved revision, run the checks and review both diffs using the infrastructure procedure below. Deploy `AirborneTrends` first, preserving the existing explicit polling setting, then `AirborneTrendsDeployment`. The first stack adds a 512 MB history builder, an hourly schedule, prefix-scoped S3 permissions and an error alarm using the existing alert topic. The second adds the history function to code-only release permissions and commands. No new bucket or database is created.
 
 The release command accepts an optional fourth argument, the `HistoryFunction` output ARN. Older pipeline commands with three arguments remain compatible during this rollout, but do not update the history builder. After both stack updates, subsequent automatic releases update both functions before publishing the frontend.
 
@@ -56,12 +56,12 @@ Local synthesis and tests need no AWS credentials and make no provider calls. Be
    export AWS_PROFILE=YOUR_PROFILE
    npx cdk bootstrap aws://PROJECT_ACCOUNT_ID/eu-north-1
    npm run infra:synth
-   npm run infra:diff -- AirlineRanking
-   npm run infra:deploy -- AirlineRanking --parameters AlertEmail=YOUR_EMAIL --parameters CertificateArn=YOUR_CERTIFICATE_ARN --parameters HostedZoneId=YOUR_ZONE_ID --outputs-file cdk.out/outputs.json
+   npm run infra:diff -- AirborneTrends
+   npm run infra:deploy -- AirborneTrends --parameters AlertEmail=YOUR_EMAIL --parameters CertificateArn=YOUR_CERTIFICATE_ARN --parameters HostedZoneId=YOUR_ZONE_ID --outputs-file cdk.out/outputs.json
    ```
 
    Replace the placeholders locally; keep credentials and deployment outputs out of Git. Review resource and IAM changes before approving deployment. Confirm the SNS subscription email to receive refresh failure alerts. This first deployment leaves polling disabled.
-4. Create the standard-tier SSM **SecureString** `/airline-ranking/skylink-api-key` in Stockholm, using the default AWS-managed SSM key. Enter the API key directly in the AWS console. The stack references this parameter without storing its value in CloudFormation or the frontend.
+4. Create the standard-tier SSM **SecureString** `/airborne-trends/skylink-api-key` in Stockholm, using the default AWS-managed SSM key. Enter the API key directly in the AWS console. The stack references this parameter without storing its value in CloudFormation or the frontend.
 5. Stop the local backend. Upload its existing `.cache/operator-names.json` to `operator-names.json` in the stack's private `StateBucket`, preserving `attempts` and `cooldownUntil`. Initialize `refresh-state.json` there with `{"lastAttemptSlot":null,"snapshot":null,"snapshotAttempts":[]}` only on the first deployment. Never overwrite existing cloud state during a redeployment.
 6. Build and publish the frontend using the stack outputs:
 
@@ -74,8 +74,8 @@ Local synthesis and tests need no AWS credentials and make no provider calls. Be
 7. Once state, key, plan and spend-limit verification and frontend are ready, review and deploy with `-c isPollingEnabled=true`:
 
    ```sh
-   npm run infra:diff -- AirlineRanking -c isPollingEnabled=true
-   npm run infra:deploy -- AirlineRanking -c isPollingEnabled=true --parameters AlertEmail=YOUR_EMAIL
+   npm run infra:diff -- AirborneTrends -c isPollingEnabled=true
+   npm run infra:deploy -- AirborneTrends -c isPollingEnabled=true --parameters AlertEmail=YOUR_EMAIL
    ```
 
    Keep this context value explicit on subsequent deployments; omitting it disables polling. To pause polling, deploy with `-c isPollingEnabled=false`. Pausing does not stop CloudFront or storage charges. Keep the local backend stopped while the cloud poller is active.
@@ -83,7 +83,7 @@ Local synthesis and tests need no AWS credentials and make no provider calls. Be
 
 ### Automatic deployment from main
 
-GitHub Actions checks pull requests and `main` using `npm run check`. `infra/deployment-stack.ts` defines a separate `AirlineRankingDeployment` stack: CodePipeline V2 fetches `main` through CodeConnections and runs one CodeBuild job. The job installs dependencies, runs the checks, releases application code, and runs `npm run infra:verify`. Verification fetches the public homepage and `/api/ranking-v2`, requires the HTML to match the uploaded build, and validates the compact ranking using the same validator as the frontend. Requests have a 15-second timeout, including response-body reads. A failed check fails the build and pipeline; it does not roll back the deployed code. Snapshot freshness is reported in the build log; a delayed but valid snapshot does not fail deployment because refresh failures have their own alarm. Verification never invokes Lambda or calls SkyLink, and does not verify browser rendering or the next scheduled refresh. Separate helpers define the build, pipeline and restricted release/source permissions. Executions queue, with one build at a time and a 30-minute build timeout. Code releases do not verify the account plan or spend limit. Confirm account configuration and the spend limit separately in AWS Settings before infrastructure changes.
+GitHub Actions checks pull requests and `main` using `npm run check`. `infra/deployment-stack.ts` defines a separate `AirborneTrendsDeployment` stack: CodePipeline V2 fetches `main` through CodeConnections and runs one CodeBuild job. The job installs dependencies, runs the checks, releases application code, and runs `npm run infra:verify`. Verification fetches the public homepage and `/api/ranking-v2`, requires the HTML to match the uploaded build, and validates the compact ranking using the same validator as the frontend. Requests have a 15-second timeout, including response-body reads. A failed check fails the build and pipeline; it does not roll back the deployed code. Snapshot freshness is reported in the build log; a delayed but valid snapshot does not fail deployment because refresh failures have their own alarm. Verification never invokes Lambda or calls SkyLink, and does not verify browser rendering or the next scheduled refresh. Separate helpers define the build, pipeline and restricted release/source permissions. Executions queue, with one build at a time and a 30-minute build timeout. Code releases do not verify the account plan or spend limit. Confirm account configuration and the spend limit separately in AWS Settings before infrastructure changes.
 
 `infra/release.ts` bundles the backend with esbuild and creates a ZIP using Python 3's standard library, included in the CodeBuild image. It verifies the existing Lambda's Node.js 22 runtime, ARM64 architecture and handler, updates code with an optimistic revision guard, waits for completion, and verifies the deployed package hash before publishing the frontend. It never invokes Lambda or calls SkyLink. A failure stops the release; backend and frontend updates are sequential, not an atomic transaction. If frontend publication fails, the updated backend remains deployed.
 
@@ -92,11 +92,11 @@ Create a GitHub CodeConnections connection in Stockholm. Install AWS Connector f
 After the application stack exists and the release code has been merged into `main`, review and deploy the pipeline:
 
 ```sh
-npm run infra:diff -- AirlineRankingDeployment --exclusively
-npm run infra:deploy -- AirlineRankingDeployment --exclusively --parameters ConnectionArn=YOUR_CONNECTION_ARN --parameters AlertEmail=YOUR_EMAIL
+npm run infra:diff -- AirborneTrendsDeployment --exclusively
+npm run infra:deploy -- AirborneTrendsDeployment --exclusively --parameters ConnectionArn=YOUR_CONNECTION_ARN --parameters AlertEmail=YOUR_EMAIL
 ```
 
-The deployment stack also subscribes the supplied email address to a separate SNS topic. Confirm its subscription email after deployment. An EventBridge rule sends notifications only when this pipeline execution enters `FAILED`, including source, build, release, or verification failures; successful executions send no email. The email contains the pipeline execution event, and detailed results remain in CodeBuild logs. Build commands and notification resources are configured by the `AirlineRankingDeployment` stack; changes to them require a reviewed infrastructure deployment.
+The deployment stack also subscribes the supplied email address to a separate SNS topic. Confirm its subscription email after deployment. An EventBridge rule sends notifications only when this pipeline execution enters `FAILED`, including source, build, release, or verification failures; successful executions send no email. The email contains the pipeline execution event, and detailed results remain in CodeBuild logs. Build commands and notification resources are configured by the `AirborneTrendsDeployment` stack; changes to them require a reviewed infrastructure deployment.
 
 The pipeline can start immediately after creation. Verify automatic change detection after the next approved merge to `main`: the execution history must show a repository event trigger and the merged commit ID. A successful manually started release does not verify this trigger. Automatic releases preserve the deployed schedule, concurrency, environment and IAM permissions. Polling is controlled only by reviewed manual deployments of the application stack with an explicit `-c isPollingEnabled` value. A synthesized template in CI is validation, not an infrastructure deployment.
 
@@ -132,9 +132,9 @@ Tags do not trigger AWS deployments or restore infrastructure, cached data or pr
 Disabling polling stops scheduled provider requests, but leaves the website and AWS resources running. To remove a deployment:
 
 1. Deploy the application stack with `-c isPollingEnabled=false`. Verify that both the 15-minute refresh and the hourly history schedule are disabled. Stop local backends using the key. To stop monthly reference updates, disable the **Update aircraft reference** workflow in GitHub Actions.
-2. Record the physical names of three retained S3 buckets: the website and state buckets in `AirlineRanking` and the artifacts bucket in `AirlineRankingDeployment`. Delete the deployment stack first. Then disable termination protection on the application stack and delete it.
+2. Record the physical names of three retained S3 buckets: the website and state buckets in `AirborneTrends` and the artifacts bucket in `AirborneTrendsDeployment`. Delete the deployment stack first. Then disable termination protection on the application stack and delete it.
 3. Once the stored data is no longer needed, empty and delete all three buckets. Remove every object version and delete marker from versioned buckets. The state bucket includes counts archives and provider request history.
-4. Delete the separately created `/airline-ranking/skylink-api-key` parameter if it is no longer needed. Review separately configured billing alerts and deployment access. Remove the CodeConnections connection if unused. If its GitHub installation serves other projects, retain it and remove only this repository’s access.
+4. Delete the separately created `/airborne-trends/skylink-api-key` parameter if it is no longer needed. Review separately configured billing alerts and deployment access. Remove the CodeConnections connection if unused. If its GitHub installation serves other projects, retain it and remove only this repository’s access.
 5. Review the `CDKToolkit` bootstrap stack and its assets separately. Bootstrap resources support CDK deployments in the AWS project and Region and may be shared by other applications; remove them only when no remaining deployment needs them.
 6. The domain, hosted zone and certificate are not deleted with the stack. Keep them if other sites use them. Otherwise, review domain auto-renewal and remove unneeded DNS storage and certificates; do not remove validation records for certificates still in use. Domain renewal and hosted-zone charges continue while retained.
 7. Check billing after usage records have updated and confirm no unwanted resources remain. Retiring AWS resources does not cancel the SkyLink subscription; review that separately.

@@ -82,9 +82,9 @@ test('missing index blocks publication', async t => {
 });
 
 test('deployment outputs require the expected stack, bucket and distribution', () => {
-  assert.deepEqual(readWebsiteOutputs({ AirlineRanking: outputs }), outputs);
-  for (const value of [null, {}, { AirlineRanking: {} }, { AirlineRanking: { ...outputs, WebsiteBucket: '../state' } },
-    { AirlineRanking: { ...outputs, DistributionId: '*' } }]) {
+  assert.deepEqual(readWebsiteOutputs({ AirborneTrends: outputs }), outputs);
+  for (const value of [null, {}, { AirborneTrends: {} }, { AirborneTrends: { ...outputs, WebsiteBucket: '../state' } },
+    { AirborneTrends: { ...outputs, DistributionId: '*' } }]) {
     assert.throws(() => readWebsiteOutputs(value), /outputs/);
   }
 });
