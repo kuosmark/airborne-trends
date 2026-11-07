@@ -5,12 +5,12 @@ import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { App } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
-import { AirlineRankingStack } from '../infra/stack.ts';
+import { AirborneTrendsStack } from '../infra/stack.ts';
 
 const output = mkdtempSync(join(tmpdir(), 'airline-infra-'));
 after(() => rmSync(output, { recursive: true, force: true }));
 const app = new App({ outdir: output });
-const stack = new AirlineRankingStack(app, 'Test', { env: { region: 'eu-north-1' } });
+const stack = new AirborneTrendsStack(app, 'Test', { env: { region: 'eu-north-1' } });
 const template = Template.fromStack(stack);
 
 test('polling starts disabled with bounded concurrency, execution time and no automatic retries', () => {
@@ -123,11 +123,11 @@ test('three consecutive failing periods notify the deployment-supplied email', (
 
 test('polling must be explicitly enabled and other Regions are rejected', () => {
   const enabledApp = new App({ outdir: join(output, 'enabled'), context: { isPollingEnabled: 'true' } });
-  const enabled = new AirlineRankingStack(enabledApp, 'Enabled', { env: { region: 'eu-north-1' } });
+  const enabled = new AirborneTrendsStack(enabledApp, 'Enabled', { env: { region: 'eu-north-1' } });
   Template.fromStack(enabled).hasResourceProperties('AWS::Scheduler::Schedule', { State: 'ENABLED' });
-  assert.throws(() => new AirlineRankingStack(new App(), 'WrongRegion', { env: { region: 'eu-west-1' } }), /eu-north-1/);
+  assert.throws(() => new AirborneTrendsStack(new App(), 'WrongRegion', { env: { region: 'eu-west-1' } }), /eu-north-1/);
   const invalidApp = new App({ context: { isPollingEnabled: 'yes' } });
-  assert.throws(() => new AirlineRankingStack(invalidApp, 'Invalid', { env: { region: 'eu-north-1' } }), /true or false/);
+  assert.throws(() => new AirborneTrendsStack(invalidApp, 'Invalid', { env: { region: 'eu-north-1' } }), /true or false/);
 });
 
 

@@ -27,6 +27,6 @@ export async function verifyDeployment(expectedHtml: string): Promise<void> {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const expectedHtml = await readFile('dist/airline-ranking/browser/index.html', 'utf8');
+  const expectedHtml = await readFile('dist/airborne-trends/browser/index.html', 'utf8');
   await verifyDeployment(expectedHtml);
 }

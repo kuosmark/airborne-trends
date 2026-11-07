@@ -152,8 +152,8 @@ Averages describe observed airborne counts, not unique aircraft, flights, passen
 
 History begins when collection was enabled and is prepared hourly, so it can lag the live ranking. The year view leaves earlier time blank rather than extrapolating. Empty periods, insufficient coverage and unavailable history are shown explicitly; a failed history request does not affect the live ranking. Period-to-period comparisons and historical ranking tables are not included.
 
-![Seven-day airborne history with rounded gridlines and uncovered time left blank](images/airborne-history.png)
+![Seven-day airborne history with hourly averages and gaps in coverage](images/airborne-history.png)
 
-*Observed counts over seven days. Time before collection began remains blank.*
+*Hourly averages over seven days. Breaks in the line indicate insufficient coverage.*
 
 Within operator and aircraft-type drawers, Aircraft locations appears before Airborne history. Locations starts expanded and can be collapsed; History starts collapsed. Both sections can be open together.

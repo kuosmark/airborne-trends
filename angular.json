@@ -3,7 +3,7 @@
   "version": 1,
   "cli": { "analytics": false },
   "projects": {
-    "airline-ranking": {
+    "airborne-trends": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -15,7 +15,7 @@
             "index": "src/index.html",
             "tsConfig": "tsconfig.json",
             "styles": ["src/styles.css"],
-            "outputPath": "dist/airline-ranking"
+            "outputPath": "dist/airborne-trends"
           },
           "configurations": {
             "production": { "outputHashing": "all", "budgets": [{ "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }] },
@@ -27,7 +27,7 @@
           "builder": "@angular/build:dev-server",
           "options": { "proxyConfig": "proxy.conf.json" },
           "configurations": {
-            "development": { "buildTarget": "airline-ranking:build:development" }
+            "development": { "buildTarget": "airborne-trends:build:development" }
           },
           "defaultConfiguration": "development"
         }

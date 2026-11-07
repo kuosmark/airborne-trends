@@ -1,6 +1,8 @@
-# Airline Ranking
+# Airborne Trends
 
-Observed airborne aircraft, ranked by operator and aircraft type. Explore the latest snapshot, fleet breakdowns, aircraft locations and historical counts.
+Aircraft counts and rankings over time
+
+Explore the latest snapshot, fleet breakdowns, aircraft locations and historical counts by operator and aircraft type.
 
 [![Checks](https://github.com/kuosmark/airline-ranking/actions/workflows/check.yml/badge.svg)](https://github.com/kuosmark/airline-ranking/actions/workflows/check.yml)
 [![Latest release](https://img.shields.io/github/v/release/kuosmark/airline-ranking)](https://github.com/kuosmark/airline-ranking/releases/latest)

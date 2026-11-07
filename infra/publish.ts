@@ -68,6 +68,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const outputsPath = process.argv[2];
   if (!outputsPath) { throw new Error('Provide the CDK outputs JSON file'); }
   const value: unknown = JSON.parse(await readFile(outputsPath, 'utf8'));
-  await publishWebsite('dist/airline-ranking/browser', readWebsiteOutputs(value));
+  await publishWebsite('dist/airborne-trends/browser', readWebsiteOutputs(value));
   console.log('Website published and CloudFront invalidation completed.');
 }

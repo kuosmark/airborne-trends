@@ -5,14 +5,14 @@ import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { App, ArnFormat } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
-import { AirlineRankingStack } from '../infra/stack.ts';
+import { AirborneTrendsStack } from '../infra/stack.ts';
 import { DeploymentStack } from '../infra/deployment-stack.ts';
 
 const output = mkdtempSync(join(tmpdir(), 'airline-deployment-'));
 after(() => rmSync(output, { recursive: true, force: true }));
 const app = new App({ outdir: output, context: { '@aws-cdk/core:defaultCrossStackReferences': 'strong' } });
 const env = { region: 'eu-north-1' };
-const application = new AirlineRankingStack(app, 'Application', { env });
+const application = new AirborneTrendsStack(app, 'Application', { env });
 const deployment = new DeploymentStack(app, 'Deployment', {
   env, website: application.website, distribution: application.distribution, refresh: application.refresh, historyBuilder: application.historyBuilder,
 });

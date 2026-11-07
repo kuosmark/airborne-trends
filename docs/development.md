@@ -43,7 +43,7 @@ Run `npm run check` before committing. GitHub Actions runs the same command plus
 | `npm run typecheck:backend` | Type-check the backend and shared ranking types |
 | `npm test` | Test ranking, caching, provider cost controls, HTTP behavior, scheduled refreshes, infrastructure and release safeguards |
 | `npm run test:browser` | Run ranking, history and responsive interaction checks in Chromium at 320px, 390px and desktop widths |
-| `npm run build` | Build the frontend into `dist/airline-ranking/browser` |
+| `npm run build` | Build the frontend into `dist/airborne-trends/browser` |
 | `npm run typecheck:infra` | Type-check the CDK application |
 | `npm run infra:synth` | Bundle Lambda and validate the generated CloudFormation template without AWS lookups |
 | `npm run infra:diff` | Compare the stack with deployed resources |
