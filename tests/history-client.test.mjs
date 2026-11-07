@@ -16,7 +16,7 @@ test('history loads only advertised dates within the requested window and forwar
     return globalThis.Response.json(path.endsWith('index.json') ? index : day);
   });
   const result = await loadHistory(1, signal, now);
-  assert.deepEqual(calls, ['/api/history/v1/index.json', '/api/history/v1/2026-10-30.json']);
+  assert.deepEqual(calls, ['api/history/v1/index.json', 'api/history/v1/2026-10-30.json']);
   assert.deepEqual(result.days, [day]);
 });
 

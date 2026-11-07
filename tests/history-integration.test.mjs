@@ -55,7 +55,7 @@ test('multi-day archives reach charts with missing samples, zero counts and dela
     }
   };
   t.mock.method(globalThis, 'fetch', async path => {
-    const object = published.get(path.slice(1));
+    const object = published.get(path);
     // HTTP clients receive decompressed JSON from Content-Encoding: gzip.
     return object ? new globalThis.Response(gunzipSync(object.Body), { headers: { 'Content-Type': object.ContentType } })
       : new globalThis.Response('', { status: 404 });

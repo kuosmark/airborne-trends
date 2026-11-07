@@ -14,11 +14,11 @@ export function createRankingClient() {
   }
 
   return async (signal: AbortSignal): Promise<Snapshot> => {
-    let url = '/api/ranking-v2';
+    let url = 'api/ranking-v2';
     let response = await request(url, signal);
     // The frontend can deploy before the first compact snapshot is published.
     if (response.status === 404 || response.status === 403) {
-      url = '/api/ranking';
+      url = 'api/ranking';
       response = await request(url, signal);
     }
     if (response.status === 304 && snapshot && previousUrl === url) { return snapshot; }
@@ -27,7 +27,7 @@ export function createRankingClient() {
     if (nextEtag && nextEtag === etag && previousUrl === url && snapshot) { return snapshot; }
     const value: unknown = await response.json();
     let next: Snapshot;
-    if (url === '/api/ranking-v2') {
+    if (url === 'api/ranking-v2') {
       next = expandSnapshot(value);
     } else {
       if (!isSnapshot(value)) { throw new Error('Invalid ranking response'); }
