@@ -4,7 +4,7 @@
 
 ## AWS infrastructure
 
-`infra/stack.ts` defines one stack: two private S3 buckets, CloudFront with Origin Access Control, an ARM64 Node.js 22 Lambda, a 15-minute EventBridge Scheduler schedule, and an email alarm for Lambda errors. The frontend and ranking endpoints share one CloudFront origin; browser traffic does not invoke Lambda or SkyLink. No API Gateway, VPC or NAT gateway is required. Stack helpers separate hosting, state storage, refresh scheduling and alerts while creating resources under the original stack scope and construct IDs.
+The application stack in `infra/stack.ts` schedules two Lambda functions. The ranking refresh runs every 15 minutes and archives aggregate counts in the private state bucket. The hourly history builder reads those counts and prepares chart files. Both publish to the website bucket, where CloudFront serves the Angular app, rankings and charts. Each function has an error alarm. The separate deployment stack builds and publishes releases from `main`.
 
 Airborne Trends uses the original `AirlineRanking` stack names and `/airline-ranking/` parameter path. The public address is `https://airlines.markuskuosmanen.com`. The stack creates an A alias pointing to the existing distribution in the supplied public hosted zone; it does not create another zone or register the domain. It uses a separately issued, non-exportable ACM certificate in `us-east-1`, as required for global CloudFront HTTPS. Application resources stay in Stockholm. The original CloudFront address remains available as `WebsiteUrl`; `CustomDomainUrl` supplies the custom address.
 
@@ -49,14 +49,15 @@ If a history build fails, inspect its CloudWatch logs and permissions. The previ
 Local synthesis and tests need no AWS credentials and make no provider calls. Before deploying:
 
 1. Confirm the selected Region (`eu-north-1`), account configuration and monthly project spend limit in AWS Settings. Check what the configured limit covers and what happens when it is reached; budget notifications alone are not a spending cap. Account for domain registration and renewal separately. Do not change the plan or activate advanced features as part of deployment.
-2. Confirm the Lambda concurrency quota permits reserving one execution while maintaining AWS's required unreserved capacity. Do not remove the concurrency limit to work around a quota error.
-3. Authenticate the named `personal` AWS profile. Bootstrap CDK in this project and Region if necessary, then synthesize and review the diff:
+2. Confirm the Lambda concurrency quota permits two reserved executions, one per function, while maintaining AWS's required unreserved capacity. Do not remove the concurrency limit to work around a quota error.
+3. Authenticate your AWS profile and set `AWS_PROFILE` in the shell used for the deployment commands. Bootstrap CDK in this project and Region if necessary, then synthesize and review the diff:
 
    ```sh
-   npx cdk bootstrap aws://PROJECT_ACCOUNT_ID/eu-north-1 --profile personal
+   export AWS_PROFILE=YOUR_PROFILE
+   npx cdk bootstrap aws://PROJECT_ACCOUNT_ID/eu-north-1
    npm run infra:synth
-   npm run infra:diff -- AirlineRanking --profile personal
-   npm run infra:deploy -- AirlineRanking --profile personal --parameters AlertEmail=YOUR_EMAIL --parameters CertificateArn=YOUR_CERTIFICATE_ARN --parameters HostedZoneId=YOUR_ZONE_ID --outputs-file cdk.out/outputs.json
+   npm run infra:diff -- AirlineRanking
+   npm run infra:deploy -- AirlineRanking --parameters AlertEmail=YOUR_EMAIL --parameters CertificateArn=YOUR_CERTIFICATE_ARN --parameters HostedZoneId=YOUR_ZONE_ID --outputs-file cdk.out/outputs.json
    ```
 
    Replace the placeholders locally; keep credentials and deployment outputs out of Git. Review resource and IAM changes before approving deployment. Confirm the SNS subscription email to receive refresh failure alerts. This first deployment leaves polling disabled.
@@ -66,15 +67,15 @@ Local synthesis and tests need no AWS credentials and make no provider calls. Be
 
    ```sh
    npm run build
-   AWS_PROFILE=personal npm run infra:publish -- cdk.out/outputs.json
+   npm run infra:publish -- cdk.out/outputs.json
    ```
 
    Publishing uploads assets before `index.html`, requires revalidation for HTML and unhashed files, and gives hashed JavaScript/CSS a one-year cache lifetime. It waits for CloudFront invalidation to complete. Only the current build's HTML, JavaScript and CSS files are accepted; unexpected directories, files or symlinks stop publication before AWS requests. The script never reads or writes backend state or `api/ranking`, and does not delete previous frontend assets. Old hashed files remain available to visitors with an older page; review them when retiring the site. If an upload fails before HTML is published, the existing page remains available. A later invalidation failure can leave some visitors seeing cached files until expiry; rerun publishing to retry.
 7. Once state, key, plan and spend-limit verification and frontend are ready, review and deploy with `-c isPollingEnabled=true`:
 
    ```sh
-   npm run infra:diff -- AirlineRanking --profile personal -c isPollingEnabled=true
-   npm run infra:deploy -- AirlineRanking --profile personal -c isPollingEnabled=true --parameters AlertEmail=YOUR_EMAIL
+   npm run infra:diff -- AirlineRanking -c isPollingEnabled=true
+   npm run infra:deploy -- AirlineRanking -c isPollingEnabled=true --parameters AlertEmail=YOUR_EMAIL
    ```
 
    Keep this context value explicit on subsequent deployments; omitting it disables polling. To pause polling, deploy with `-c isPollingEnabled=false`. Pausing does not stop CloudFront or storage charges. Keep the local backend stopped while the cloud poller is active.
@@ -91,8 +92,8 @@ Create a GitHub CodeConnections connection in Stockholm. Install AWS Connector f
 After the application stack exists and the release code has been merged into `main`, review and deploy the pipeline:
 
 ```sh
-npm run infra:diff -- AirlineRankingDeployment --exclusively --profile personal
-npm run infra:deploy -- AirlineRankingDeployment --exclusively --profile personal --parameters ConnectionArn=YOUR_CONNECTION_ARN --parameters AlertEmail=YOUR_EMAIL
+npm run infra:diff -- AirlineRankingDeployment --exclusively
+npm run infra:deploy -- AirlineRankingDeployment --exclusively --parameters ConnectionArn=YOUR_CONNECTION_ARN --parameters AlertEmail=YOUR_EMAIL
 ```
 
 The deployment stack also subscribes the supplied email address to a separate SNS topic. Confirm its subscription email after deployment. An EventBridge rule sends notifications only when this pipeline execution enters `FAILED`, including source, build, release, or verification failures; successful executions send no email. The email contains the pipeline execution event, and detailed results remain in CodeBuild logs. Build commands and notification resources are configured by the `AirlineRankingDeployment` stack; changes to them require a reviewed infrastructure deployment.
@@ -102,11 +103,11 @@ The pipeline can start immediately after creation. Verify automatic change detec
 After merging, use the following checks before considering a manual deployment:
 
 1. Find the automatic execution for the exact merged commit. A successful execution for an older commit does not confirm that the latest change is deployed.
-2. Allow at least 15 minutes for the trigger to arrive; a webhook has previously taken over 10 minutes. If an execution is queued or running, follow its progress. If it failed, investigate that failure instead of starting another deployment.
+2. Allow at least 15 minutes for the trigger to arrive. If an execution is queued or running, follow its progress. If it failed, investigate that failure instead of starting another deployment.
 3. If no execution appears after the waiting period, investigate the connection and trigger configuration. The waiting period is an investigation threshold, not an instruction to start a manual deployment automatically.
 4. Immediately before any manual start, recheck execution history for the intended commit and pin the execution to that commit. A delayed webhook may still arrive afterward, so a manual start can still cause a duplicate deployment.
 
-Infrastructure remains defined in CDK. Changes to either stack require a reviewed manual deployment; the pipeline cannot assume CDK bootstrap roles, deploy CloudFormation, manage IAM, change scheduling or upgrade the AWS plan. Its application permissions cover code updates and configuration reads for the existing refresh Lambda, frontend HTML/JavaScript/CSS uploads, and invalidation of the existing distribution. Artifact and log access is limited to its own resources. Connection policies constrain repository and branch requests to this repository's `main` branch.
+Infrastructure remains defined in CDK. Changes to either stack require a reviewed manual deployment; the pipeline cannot assume CDK bootstrap roles, deploy CloudFormation, manage IAM, change scheduling or upgrade the AWS plan. Its application permissions cover code updates and configuration reads for the refresh and history builder functions, frontend HTML/JavaScript/CSS uploads, and invalidation of the existing distribution. Artifact and log access is limited to its own resources. Connection policies constrain repository and branch requests to this repository's `main` branch.
 
 Direct Lambda code releases do not update CloudFormation's recorded code asset. Before a manual infrastructure deployment, check out the latest approved `main`, run the checks and review `cdk diff`; CDK bundles that revision's backend and may update Lambda code again. Do not deploy an older checkout unless intentionally rolling back. Keep polling context explicit. Bootstrap administrator permissions remain available for manual infrastructure administration, but are not reachable through pipeline roles.
 
@@ -124,16 +125,18 @@ Create an annotated Git tag such as `v0.1.0` on that verified commit and publish
 
 Tags do not trigger deployments or restore infrastructure, cached data or provider quota history. Recover application changes through the revert-and-release procedure above. No release branch or separate changelog is required.
 
-### Retiring the application
+### Removing a deployment
 
-Disabling polling stops scheduled provider requests, but leaves the website and AWS resources running. To retire the application completely:
+Disabling polling stops scheduled provider requests, but leaves the website and AWS resources running. To remove a deployment:
 
-1. Disable the schedule and stop any local backend using the same API key. Preserve any state needed for recovery; keep exported caches outside Git.
-2. Delete `AirlineRankingDeployment` first, then disable termination protection and delete the `AirlineRanking` stack. The pipeline imports application resource identifiers, so its stack must be removed first. Empty and delete its retained artifact bucket when no longer needed. Both S3 buckets are retained and continue to incur storage charges.
-3. After confirming their data is no longer needed, empty and delete the retained buckets. The versioned state bucket must also have all object versions and delete markers removed. Its seven-day lifecycle rule removes superseded versions. Current counts archives and operational state remain retained until explicitly deleted.
-4. Delete the separately created `/airline-ranking/skylink-api-key` parameter if it is no longer needed. Review any separately configured billing alerts or deployment access.
+1. Deploy the application stack with `-c isPollingEnabled=false`. Verify that both the 15-minute refresh and the hourly history schedule are disabled. Stop local backends using the key. To stop monthly reference updates, disable the **Update aircraft reference** workflow in GitHub Actions.
+2. Record the physical names of three retained S3 buckets: the website and state buckets in `AirlineRanking` and the artifacts bucket in `AirlineRankingDeployment`. Delete the deployment stack first. Then disable termination protection on the application stack and delete it.
+3. Once the stored data is no longer needed, empty and delete all three buckets. Remove every object version and delete marker from versioned buckets. The state bucket includes counts archives and provider request history.
+4. Delete the separately created `/airline-ranking/skylink-api-key` parameter if it is no longer needed. Review separately configured billing alerts and deployment access. Remove the CodeConnections connection if unused. If its GitHub installation serves other projects, retain it and remove only this repository’s access.
 5. Review the `CDKToolkit` bootstrap stack and its assets separately. Bootstrap resources support CDK deployments in the AWS project and Region and may be shared by other applications; remove them only when no remaining deployment needs them.
 6. The domain, hosted zone and certificate are not deleted with the stack. Keep them if other sites use them. Otherwise, review domain auto-renewal and remove unneeded DNS storage and certificates; do not remove validation records for certificates still in use. Domain renewal and hosted-zone charges continue while retained.
 7. Check billing after usage records have updated and confirm no unwanted resources remain. Retiring AWS resources does not cancel the SkyLink subscription; review that separately.
 
-Development follows the lightweight branch, pull request, and squash-merge workflow in [AGENTS.md](../AGENTS.md).
+### Starting again with empty storage
+
+Follow [First deployment](#first-deployment) with polling disabled. Empty counters cannot account for prior attempts. If the key was recently in use, reconcile its rolling 32-day request history before enabling polling, or wait for those attempts to expire. For a fresh operator cache, initialize `operator-names.json` with `{"source":"adsbdb","names":{},"attempts":[],"cooldownUntil":0}` and initialize the refresh state as described above. Enable one poller and verify its first ranking and the next hourly history build. Charts accumulate from the first new observation. Re-enable the GitHub reference workflow if monthly updates are wanted.

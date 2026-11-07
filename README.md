@@ -10,9 +10,24 @@ Explore the latest snapshot, fleet breakdowns, aircraft locations and historical
 
 **[Open the live app →](https://airlines.markuskuosmanen.com/)**
 
+## Try the local demo
+
+With Node.js 22.13+ (22.x) or 24.x, run these commands from the repository root:
+
+```sh
+npm ci
+npm run demo
+```
+
+Open [localhost:4200](http://127.0.0.1:4200/). The demo generates four fictional fleets and a year of sample history locally, without credentials. Try comparing Ember Freight and Northvale Regional in their seven-day charts.
+
 ![Operator ranking with search, observed airborne counts and access to airborne history](docs/images/operators.png)
 
 *Operator ranking from an observed snapshot. Counts change between refreshes.*
+
+![Seven-day airborne aircraft counts with hourly averages](docs/images/airborne-history.png)
+
+*Hourly averages across a week. Gaps mark periods with insufficient coverage.*
 
 ## Explore the rankings
 
@@ -22,8 +37,6 @@ Explore the latest snapshot, fleet breakdowns, aircraft locations and historical
 - **Search:** find operators by name, code or country, and aircraft types by name or ICAO code.
 - **Inclusive totals:** aircraft without an identified operator or type remain visible in separate expandable sections.
 - **Responsive controls:** keyboard-accessible maps, touch targets and reduced-motion support.
-
-![Aircraft-type ranking with an expanded category and engine filter panel, airborne counts and rank changes](docs/images/aircraft-types.png)
 
 <details>
 <summary>See the mobile layout</summary>
@@ -36,9 +49,7 @@ These are observed aircraft counts, not worldwide fleet totals. Coverage depends
 
 ## How it works
 
-![Data flow from SkyLink through a scheduled Lambda and S3 to CloudFront and the Angular app](docs/images/architecture.svg)
-
-*The diagram shows live delivery. An independent hourly job turns private counts archives into chart files served through the same website bucket and CloudFront; see the [history data flow](docs/architecture.md#historical-chart-delivery).*
+![SkyLink feeds the ranking refresh. Archived counts feed the hourly history builder. Both publish to the website bucket served by CloudFront.](docs/images/architecture.svg)
 
 A TypeScript Lambda validates and deduplicates the observations, builds both rankings and saves a shared snapshot. Operator metadata comes from ADSBDB; bundled Mictronics references supply aircraft type names and an ICAO24 fallback.
 
@@ -50,39 +61,12 @@ A TypeScript Lambda validates and deduplicates the observations, builds both ran
 
 Built with Angular, TypeScript, Node.js and AWS CDK. [Explore the architecture](docs/architecture.md).
 
-## Run locally
-
-Requires Node.js 22.13+ (22.x) or 24.x, `zip`, `unzip` and Python 3 for release-packaging checks. You need a SkyLink API key to fetch live data; tests need no credentials.
-
-```sh
-npm ci
-```
-
-For a local demo with four fictional operators, six aircraft types, route maps and a year of synthetic history, run `npm run demo` after installing dependencies and open [localhost:4200](http://127.0.0.1:4200/). Each start regenerates the sample data for the current dates. The demo runs locally without credentials.
-
-For live development, create an untracked `.env` file containing `SKYLINK_API_KEY=your-api-key`. Start the backend and frontend in separate terminals:
-
-```sh
-npm run backend
-```
-
-```sh
-npm start
-```
-
-Open [localhost:4200](http://127.0.0.1:4200/). The backend fetches immediately and every 15 minutes. **Use only one active poller per API key**; stop the cloud schedule before running locally with the same key.
-
-```sh
-npm run check
-```
-
-Runs lint, type checks, tests, the frontend build and infrastructure synthesis without provider requests. [Full development instructions](docs/development.md).
-
 ## Documentation
 
+- [Development](docs/development.md) — live backend setup, checks and browser tests.
 - [Ranking and data](docs/ranking.md) — filtering, grouping, movement and metadata.
 - [Architecture](docs/architecture.md) — components, backend state and scheduled refreshes.
-- [Deployment and operations](docs/deployment.md) — setup, automatic releases, recovery and retirement.
+- [Deployment and operations](docs/deployment.md) — setup, automatic releases, recovery and resource cleanup.
 - [Aircraft reference](backend/data/README.md) — provenance, attribution and monthly updates.
 - [Contributing](CONTRIBUTING.md) — proposing changes and verification expectations.
 

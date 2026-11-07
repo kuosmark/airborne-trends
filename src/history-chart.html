@@ -67,15 +67,34 @@
         <details class="values">
         <summary>Data details@if (hasCoverageNotice() || availableSince()) { <span class="coverage-hint"> · Limited coverage</span> }</summary>
         <div class="details-meta">
-          <span>{{ points().length }} {{ period() === 1 ? 'observations' : 'averages' }} · Updated {{ updatedAge() }}</span>
+          <span>{{ points().length }} {{ period() === 1 ? 'observations' : 'averages' }}@if (!isDemo) { · Updated {{ updatedAge() }} }</span>
           <span>{{ period() >= 30 ? 'UTC days' : timezone }} · Gaps indicate {{ period() === 1 ? 'missing data' : 'insufficient coverage' }}.</span>
           @if (availableSince(); as first) { <span>Available since {{ first | date: 'd MMM': dateTimezone() }}.</span> }
         </div>
-          <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="name() + ' observations'"><table [attr.aria-label]="name() + (period() === 1 ? ' observed airborne aircraft' : ' average observed airborne aircraft')"><thead><tr><th scope="col">{{ period() >= 30 ? "UTC day" : "Local time" }}</th>@if (period() !== 1) { <th scope="col">Samples</th> }<th scope="col">{{ period() === 1 ? "Aircraft" : "Average" }}</th></tr></thead><tbody>
-          @for (point of points(); track point.time) {
-            <tr><td [attr.title]="point.time | date: 'd MMM yyyy, HH:mm OOOO': dateTimezone()">{{ point.time | date: (period() >= 30 ? 'd MMM yyyy' : 'd MMM, HH:mm'): dateTimezone() }}</td>@if (period() !== 1) { <td>{{ point.samples }}/{{ point.expected }}@if (point.isPartial) { · Partial }</td> }<td>{{ point.count | number: (period() === 1 ? "1.0-0" : "1.0-1") }}</td></tr>
-          }
-          </tbody></table></div>
+          <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="name() + ' observations'">
+            <table [attr.aria-label]="name() + (period() === 1 ? ' observed airborne aircraft' : ' average observed airborne aircraft')">
+              <thead>
+                <tr>
+                  <th scope="col">{{ period() >= 30 ? "UTC day" : "Local time" }}</th>
+                  @if (period() !== 1) { <th scope="col">Samples</th> }
+                  <th scope="col">{{ period() === 1 ? "Aircraft" : "Average" }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (point of points(); track point.time) {
+                  <tr>
+                    <td [attr.title]="point.time | date: 'd MMM yyyy, HH:mm OOOO': dateTimezone()">
+                      {{ point.time | date: (period() >= 30 ? 'd MMM yyyy' : 'd MMM, HH:mm'): dateTimezone() }}
+                    </td>
+                    @if (period() !== 1) {
+                      <td>{{ point.samples }}/{{ point.expected }}@if (point.isPartial) { · Partial }</td>
+                    }
+                    <td>{{ point.count | number: (period() === 1 ? "1.0-0" : "1.0-1") }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </details>
       }
       </div>

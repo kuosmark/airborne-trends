@@ -1,11 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
-<title id="title">Shared snapshot architecture</title>
-<desc id="desc">SkyLink observations are fetched by a Lambda every fifteen minutes. Lambda publishes snapshots to S3. CloudFront serves the Angular app and snapshots to visitors. ADSBDB and bundled Mictronics references enrich the snapshot.</desc>
-<rect width="960" height="280" rx="16" fill="#f5f7f8"/>
-<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#27745c" stroke-width="1.5"/></marker></defs>
-<g fill="#fff" stroke="#dce3e0" stroke-width="2"><rect x="24" y="92" width="150" height="90" rx="10"/><rect x="212" y="92" width="170" height="90" rx="10"/><rect x="420" y="92" width="130" height="90" rx="10"/><rect x="588" y="92" width="156" height="90" rx="10"/><rect x="782" y="92" width="154" height="90" rx="10"/></g>
-<g stroke="#27745c" stroke-width="2" marker-end="url(#arrow)"><path d="M174 137H202"/><path d="M382 137H410"/><path d="M550 137H578"/><path d="M744 137H772"/></g>
-<g font-family="system-ui, sans-serif" text-anchor="middle" fill="#192129"><text x="99" y="130" font-size="20" font-weight="600">SkyLink</text><text x="297" y="130" font-size="20" font-weight="600">Lambda</text><text x="485" y="130" font-size="20" font-weight="600">S3</text><text x="666" y="130" font-size="20" font-weight="600">CloudFront</text><text x="859" y="130" font-size="20" font-weight="600">Angular</text></g>
-<g font-family="system-ui, sans-serif" text-anchor="middle" fill="#53615c" font-size="14"><text x="99" y="157">Observations</text><text x="297" y="157">Every 15 minutes</text><text x="485" y="157">Snapshots</text><text x="666" y="157">Cached delivery</text><text x="859" y="157">Both rankings</text><text x="297" y="224">ADSBDB + bundled Mictronics references</text><text x="666" y="50">Frontend build → S3 → CloudFront</text></g>
-<path d="M297 207V183" stroke="#27745c" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="225" viewBox="0 0 880 225" role="img" aria-labelledby="title desc">
+  <title id="title">Ranking and history delivery</title>
+  <desc id="desc">SkyLink feeds the ranking refresh every fifteen minutes. The refresh publishes the ranking and archives counts. An hourly history builder reads the archive and publishes charts. CloudFront serves both from the website bucket.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="m0 0 6 3-6 3" fill="none" stroke="#39735e"/></marker>
+  </defs>
+  <rect width="880" height="225" rx="12" fill="#f5f7f8"/>
+  <g fill="white" stroke="#cbd7d1">
+    <rect x="16" y="27" width="110" height="58" rx="8"/><rect x="160" y="27" width="168" height="58" rx="8"/>
+    <rect x="160" y="143" width="168" height="58" rx="8"/><rect x="365" y="143" width="168" height="58" rx="8"/>
+    <rect x="570" y="27" width="140" height="58" rx="8"/><rect x="743" y="27" width="121" height="58" rx="8"/>
+  </g>
+  <g fill="none" stroke="#39735e" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M126 56h29"/><path d="M328 56h237"/><path d="M244 85v53"/><path d="M328 172h32"/><path d="M533 172h107V90"/><path d="M710 56h28"/>
+  </g>
+  <g font-family="system-ui,sans-serif" text-anchor="middle" fill="#20332b" font-size="16">
+    <text x="71" y="62">SkyLink</text><text x="244" y="51">Ranking refresh</text><text x="244" y="72" font-size="13">Every 15 minutes</text>
+    <text x="244" y="178">S3 counts archive</text><text x="449" y="167">History builder</text><text x="449" y="188" font-size="13">Hourly</text>
+    <text x="640" y="62">S3 website</text><text x="804" y="62">CloudFront</text>
+    <g font-size="13" fill="#53615c"><text x="449" y="47">Latest ranking</text><text x="586" y="163">Chart files</text></g>
+  </g>
 </svg>
