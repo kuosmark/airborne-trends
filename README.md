@@ -58,7 +58,9 @@ Requires Node.js 22.13+ (22.x) or 24.x, `zip`, `unzip` and Python 3 for release-
 npm ci
 ```
 
-Create an untracked `.env` file containing `SKYLINK_API_KEY=your-api-key`. Start the backend and frontend in separate terminals:
+For a local demo with four fictional operators, six aircraft types, route maps and a year of synthetic history, run `npm run demo` after installing dependencies and open [localhost:4200](http://127.0.0.1:4200/). Each start regenerates the sample data for the current dates. The demo runs locally without credentials.
+
+For live development, create an untracked `.env` file containing `SKYLINK_API_KEY=your-api-key`. Start the backend and frontend in separate terminals:
 
 ```sh
 npm run backend

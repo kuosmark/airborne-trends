@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "ng serve --host 127.0.0.1",
+    "demo": "node --experimental-strip-types scripts/demo.ts && ng serve --configuration demo --host 127.0.0.1",
     "backend": "node --env-file=.env --experimental-strip-types backend/main.ts",
     "build": "ng build",
     "lint": "eslint src shared backend infra scripts tests --max-warnings=0",

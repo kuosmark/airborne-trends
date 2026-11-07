@@ -18,6 +18,7 @@
             "outputPath": "dist/airborne-trends"
           },
           "configurations": {
+            "demo": { "assets": [{ "glob": "**/*", "input": ".cache/demo/api", "output": "/api/" }], "define": { "IS_DEMO": "true" } },
             "production": { "outputHashing": "all", "budgets": [{ "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }] },
             "development": { "optimization": false, "sourceMap": true }
           },
@@ -25,9 +26,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": { "proxyConfig": "proxy.conf.json" },
           "configurations": {
-            "development": { "buildTarget": "airborne-trends:build:development" }
+            "development": { "buildTarget": "airborne-trends:build:development", "proxyConfig": "proxy.conf.json" },
+            "demo": { "buildTarget": "airborne-trends:build:development,demo" }
           },
           "defaultConfiguration": "development"
         }

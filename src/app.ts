@@ -9,6 +9,8 @@ import { formatSnapshotAge } from './snapshot-age';
 import { HistoryChartComponent } from './history-chart';
 import { RankingBoardComponent } from './ranking-board';
 
+declare const IS_DEMO: boolean;
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -18,6 +20,7 @@ import { RankingBoardComponent } from './ranking-board';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit, OnDestroy {
+  readonly isDemo = typeof IS_DEMO !== 'undefined' && IS_DEMO;
   private readonly abort = new AbortController();
   private readonly fetchRanking = createRankingClient();
   private stopPolling?: () => void;
