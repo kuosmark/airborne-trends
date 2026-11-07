@@ -2,6 +2,10 @@
   display: block;
 }
 
+.breakdown-heading {
+  margin: 0;
+}
+
 .types-toggle:focus-visible {
   outline: 2px solid var(--focus-color);
   outline-offset: 3px;

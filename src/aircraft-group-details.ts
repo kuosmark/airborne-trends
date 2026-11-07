@@ -16,7 +16,7 @@ export class AircraftGroupDetailsComponent {
   readonly aircraft = input.required<Pick<AircraftGroup, 'count' | 'positions'>>();
   readonly breakdown = input.required<{ name: string; count: number }[]>();
   readonly breakdownLabel = input('types');
-  readonly heading = computed(() => this.breakdownLabel() === 'operators' ? 'Airborne aircraft by operator' : 'Airborne aircraft by type');
+  readonly heading = computed(() => this.breakdownLabel() === 'operators' ? 'Operators' : 'Aircraft types');
   readonly groupId = input.required<string>();
   readonly groupName = input.required<string>();
   readonly isShowingAllTypes = input.required<boolean>();

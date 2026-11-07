@@ -1,28 +1,40 @@
-<h2 class="drawer-section-title">{{ heading() }}</h2>
-@if (count() === 0) {
-  <p class="no-aircraft">No aircraft currently observed airborne.</p>
+@if (breakdownLabel() === 'descriptions') {
+  <h2 class="drawer-section-title">{{ heading() }}</h2>
 } @else {
-  @let visibleTypes = isShowingAllTypes() ? breakdown() : breakdown().slice(0, collapsedTypeLimit);
-  <dl [attr.aria-label]="breakdownLabel()" [id]="'type-list-' + groupId()">
-    @for (type of visibleTypes; track $index) {
-      <div class="aircraft-type">
-        <dt>{{ type.name }}</dt>
-        <dd>{{ type.count | number }}</dd>
-      </div>
-    }
-  </dl>
-  <div class="types-footer">
-    <span>{{ visibleTypes.length }} of {{ breakdown().length }} {{ breakdownLabel() }}</span>
-    @if (breakdown().length > collapsedTypeLimit) {
-      <button class="types-toggle" type="button" (click)="typesToggled.emit()"
-        [attr.aria-expanded]="isShowingAllTypes()" [attr.aria-controls]="'type-list-' + groupId()">
-        @if (isShowingAllTypes()) {
-          Show fewer
-        } @else {
-          Show {{ breakdown().length - collapsedTypeLimit }} more
-        }
-        <span class="visually-hidden"> {{ breakdownLabel() }} for {{ groupName() }}</span>
-      </button>
-    }
-  </div>
+  <h2 class="breakdown-heading">
+    <button class="drawer-section-title drawer-section-toggle" type="button"
+      [attr.aria-expanded]="isOpen()" [attr.aria-controls]="'breakdown-' + groupId()" (click)="isOpen.set(!isOpen())">
+      {{ heading() }}
+      <span class="chevron" [class.is-open]="isOpen()" aria-hidden="true"></span>
+    </button>
+  </h2>
 }
+<div [hidden]="!isOpen()" [id]="'breakdown-' + groupId()">
+  @if (count() === 0) {
+    <p class="no-aircraft">No aircraft currently observed airborne.</p>
+  } @else {
+    @let visibleTypes = isShowingAllTypes() ? breakdown() : breakdown().slice(0, collapsedTypeLimit);
+    <dl [attr.aria-label]="breakdownLabel()" [id]="'type-list-' + groupId()">
+      @for (type of visibleTypes; track $index) {
+        <div class="aircraft-type">
+          <dt>{{ type.name }}</dt>
+          <dd>{{ type.count | number }}</dd>
+        </div>
+      }
+    </dl>
+    <div class="types-footer">
+      <span>{{ visibleTypes.length }} of {{ breakdown().length }} {{ breakdownLabel() }}</span>
+      @if (breakdown().length > collapsedTypeLimit) {
+        <button class="types-toggle" type="button" (click)="typesToggled.emit()"
+          [attr.aria-expanded]="isShowingAllTypes()" [attr.aria-controls]="'type-list-' + groupId()">
+          @if (isShowingAllTypes()) {
+            Show fewer
+          } @else {
+            Show {{ breakdown().length - collapsedTypeLimit }} more
+          }
+          <span class="visually-hidden"> {{ breakdownLabel() }} for {{ groupName() }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>
