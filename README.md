@@ -8,7 +8,7 @@ Explore the latest snapshot, fleet breakdowns, aircraft locations and historical
 [![Latest release](https://img.shields.io/github/v/release/kuosmark/airline-ranking)](https://github.com/kuosmark/airline-ranking/releases/latest)
 [![MIT licence](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
 
-**[Open the live app →](https://airlines.markuskuosmanen.com/)**
+**[Try the demo](https://kuosmark.github.io/airline-ranking/)** · [Open the live app](https://airlines.markuskuosmanen.com/)
 
 ## Try the local demo
 
@@ -38,14 +38,11 @@ Open [localhost:4200](http://127.0.0.1:4200/). The demo generates four fictional
 - **Inclusive totals:** aircraft without an identified operator or type remain visible in separate expandable sections.
 - **Responsive controls:** keyboard-accessible maps, touch targets and reduced-motion support.
 
-<details>
-<summary>See the mobile layout</summary>
-
-<img src="docs/images/mobile.png" alt="Operator ranking on a mobile screen with history, search and observed aircraft counts" width="390">
-
-</details>
-
 These are observed aircraft counts, not worldwide fleet totals. Coverage depends on SkyLink. Refreshes run every 15 minutes; if a refresh fails, the last successful snapshot remains visible with a delay notice. [Read the grouping and identification rules](docs/ranking.md).
+
+### Mobile layout
+
+<img src="docs/images/mobile.png" alt="Operator ranking on a mobile screen with history, search and observed aircraft counts" width="320">
 
 ## How it works
 
