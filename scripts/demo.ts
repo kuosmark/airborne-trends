@@ -4,7 +4,7 @@ import { compareRanks } from '../shared/ranking.ts';
 import { compactSnapshot } from '../shared/snapshot-wire.ts';
 import { DAY_MS, type HistoryDay } from '../shared/history-chart.ts';
 import { SAMPLE_MS, summarizeHistoryDay, type HistorySummary } from '../shared/history-summary.ts';
-import { fleets, sampleFleets } from './demo-fleets.ts';
+import { fleets, sampleFleets, sampleFraction } from './demo-fleets.ts';
 
 const now = Date.now();
 const lastSlot = Math.floor(now / SAMPLE_MS) * SAMPLE_MS;
@@ -16,13 +16,24 @@ function snapshotAt(time: number) {
   const aircraft = sampleFleets(time).flatMap(({ fleet, fleetIndex, type, typeIndex, count }) =>
     Array.from({ length: count }, (_, i) => {
       const number = typeIndex * 100 + i + 1;
-      const destination = fleet.destinations[(number + typeIndex) % fleet.destinations.length];
-      const progress = 0.08 + 0.84 * ((number * 37 + time / SAMPLE_MS) % 101) / 100;
-      const [lat, lon] = fleet.base;
+      const aircraftId = 0xf00000 + fleetIndex * 1000 + number;
+      const stops = fleet.destinations;
+      const route = Math.floor(sampleFraction(aircraftId, 751) * stops.length);
+      const destination = stops[route];
+      // Some aircraft fly between outstations. Most routes still touch the base.
+      const leg = Math.floor(sampleFraction(aircraftId, 9187) * (stops.length - 1));
+      const start = sampleFraction(aircraftId, 4223) < 0.2 ? stops[(route + leg + 1) % stops.length] : fleet.base;
+      const phase = (sampleFraction(aircraftId, 3571) + time / SAMPLE_MS / 16) % 1;
+      const progress = 0.04 + 0.92 * (1 - Math.abs(2 * phase - 1));
+      const north = destination[0] - start[0];
+      const east = destination[1] - start[1];
+      const longitudeScale = Math.cos((start[0] + destination[0]) * Math.PI / 360);
+      const bend = (sampleFraction(aircraftId, 6211) - 0.5) * 0.12 * Math.sin(Math.PI * progress);
       const ceiling = ({ C172: 5500, EC45: 3000, AT72: 22000 } as Record<string, number>)[type] ?? 36000;
-      return { icao24: (0xf00000 + fleetIndex * 1000 + number).toString(16), callsign: fleet.id + String(number),
+      return { icao24: aircraftId.toString(16), callsign: fleet.id + String(number),
         aircraft_type: type, last_seen: timestamp, is_on_ground: false,
-        latitude: lat + (destination[0] - lat) * progress, longitude: lon + (destination[1] - lon) * progress,
+        latitude: start[0] + north * progress + east * longitudeScale * bend,
+        longitude: start[1] + east * progress - north / longitudeScale * bend,
         altitude: 500 * Math.round(ceiling * Math.sin(Math.PI * progress) / 500) };
     }));
   const snapshot = countAircraft({ timestamp, total_count: aircraft.length, aircraft }, time);

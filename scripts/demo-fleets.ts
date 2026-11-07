@@ -36,16 +36,19 @@ export const fleets: Fleet[] = [
     utilization: (hour, _weekend, summer) => 0.06 + (0.50 + 0.30 * summer) * peak(hour, 12, 3.4) },
 ];
 
-// Stable variation means a timestamp has the same fleet in the ranking and every chart.
+// Stable samples keep the ranking, maps and charts consistent for a given time.
+export function sampleFraction(bucket: number, seed: number): number {
+  let bits = Math.imul(bucket, 0x45d9f3b) ^ seed;
+  bits = Math.imul(bits ^ (bits >>> 16), 0x45d9f3b);
+  return ((bits ^ (bits >>> 16)) >>> 0) / 0x100000000;
+}
+
 function variation(position: number, seed: number): number {
-  function sample(bucket: number): number {
-    let bits = Math.imul(bucket, 0x45d9f3b) ^ seed;
-    bits = Math.imul(bits ^ (bits >>> 16), 0x45d9f3b);
-    return ((bits ^ (bits >>> 16)) >>> 0) / 0x80000000 - 1;
-  }
   const bucket = Math.floor(position);
   const fraction = position - bucket;
-  return sample(bucket) + (sample(bucket + 1) - sample(bucket)) * fraction;
+  const start = sampleFraction(bucket, seed);
+  const end = sampleFraction(bucket + 1, seed);
+  return 2 * (start + (end - start) * fraction) - 1;
 }
 
 export function sampleFleets(time: number) {
