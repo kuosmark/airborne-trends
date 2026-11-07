@@ -25,6 +25,11 @@ export class HistoryChartComponent implements OnDestroy {
   readonly isLoading = signal(false);
   readonly isError = signal(false);
   readonly days = signal<HistoryDay[]>([]);
+  private readonly failedDates = signal<string[]>([]);
+  readonly hasMissingDays = computed(() => this.period() !== 365 && this.failedDates().some(date => {
+    const start = Date.parse(date);
+    return start <= this.until() && start + DAY_MS > this.since();
+  }));
   readonly generatedAt = signal('');
   readonly year = signal<HistoryYear | null>(null);
   readonly isYearError = signal(false);
@@ -117,7 +122,7 @@ export class HistoryChartComponent implements OnDestroy {
       this.clock = setInterval(() => { this.now.set(Date.now()); }, 60_000);
       this.now.set(Date.now());
       if (!this.isLoading() && !this.isYearLoading() &&
-          (!this.activeGeneratedAt() || this.isRefreshError() || this.now() - this.lastLoadStartedAt >= HOUR_MS)) {
+          (!this.activeGeneratedAt() || this.isRefreshError() || this.hasMissingDays() || this.now() - this.lastLoadStartedAt >= HOUR_MS)) {
         void this.load();
       }
     }
@@ -154,7 +159,9 @@ export class HistoryChartComponent implements OnDestroy {
       const result = await loadHistory(30, requestSignal, isDemo ? null : requestUntil);
       if (!abort.signal.aborted) {
         this.recentUntil.set(isDemo ? Date.parse(result.index.generatedAt) : requestUntil);
-        this.days.set(result.days);
+        const cached = this.days().filter(day => result.failedDates.includes(day.date));
+        this.days.set([...result.days, ...cached].sort((a, b) => a.date.localeCompare(b.date)));
+        this.failedDates.set(result.failedDates);
         this.generatedAt.set(result.index.generatedAt);
       }
     } catch {
