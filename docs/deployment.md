@@ -119,13 +119,14 @@ To pause deployment, disable the pipeline's inbound transition to its Deploy sta
 
 ### Releases
 
-Deployments continue from `main`. Releases mark meaningful milestones rather than every merged PR. After the owner approves a release, confirm the deployment of its exact commit succeeded and verify the live website and ranking endpoint. If the release includes infrastructure changes, complete and verify their manual deployment too.
+The GitHub Pages demo can be released independently of AWS.
 
-Create an annotated Git tag such as `v0.1.0` on that verified commit and publish a GitHub release with concise notes describing the changes and any known limitations. Never move or reuse a published tag. While the application is in the `0.x` stage, increment the patch number for fixes (`v0.1.1`) and the minor number for substantial features (`v0.2.0`). Match `package.json` to the planned release version through a PR before deploying and tagging it.
+1. Update the package version through a PR. During the `0.x` series, use a patch for fixes and a minor version for substantial features. Check CI and build the demo from the intended release commit with `npm run build:demo`.
+2. If releasing to an active AWS deployment, verify that same commit on the live homepage and ranking endpoint. Apply and verify any required infrastructure changes.
+3. With owner approval, create an annotated tag on the verified commit and publish a regular GitHub release with concise release notes. Published tags are permanent.
+4. Wait for **Publish demo** to succeed. Open the Pages URL from the workflow and check a ranking and a History chart.
 
-Publishing a regular GitHub release builds a standalone synthetic demo from its tag and deploys it to GitHub Pages. Set the Pages source to **GitHub Actions** and allow release tags in the `github-pages` environment's deployment rules. The workflow publishes only `dist/demo/browser`. After deployment, open the URL reported by the **Publish demo** workflow and check a ranking and a History chart. Link to that URL from the README once the first deployment succeeds.
-
-Tags do not trigger AWS deployments or restore infrastructure, cached data or provider quota history. Recover application changes through the revert-and-release procedure above. No release branch or separate changelog is required.
+The workflow builds the tagged revision and publishes `dist/demo/browser`. Configure Pages to use **GitHub Actions** and allow release tags in the `github-pages` environment.
 
 ### Removing a deployment
 

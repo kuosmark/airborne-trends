@@ -2,13 +2,13 @@
 
 Aircraft counts and rankings over time
 
-Explore the latest snapshot, fleet breakdowns, aircraft locations and historical counts by operator and aircraft type.
+Explore airborne rankings, fleet breakdowns, aircraft locations and historical counts by operator and aircraft type.
 
 [![Checks](https://github.com/kuosmark/airborne-trends/actions/workflows/check.yml/badge.svg)](https://github.com/kuosmark/airborne-trends/actions/workflows/check.yml)
 [![Latest release](https://img.shields.io/github/v/release/kuosmark/airborne-trends)](https://github.com/kuosmark/airborne-trends/releases/latest)
 [![MIT licence](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
 
-**[Try the demo](https://kuosmark.github.io/airborne-trends/)**
+**[Try the demo with sample data](https://kuosmark.github.io/airborne-trends/)**
 
 ## Try the local demo
 
@@ -54,7 +54,7 @@ A TypeScript Lambda validates and deduplicates the observations, builds both ran
 - **History charts:** on-demand 24-hour observations, seven-day hourly averages, and 30-day and one-year daily averages for all aircraft and individual operators/types, prepared hourly from S3 archives.
 - **Counts archive:** production can retain counts-only snapshots in private S3 storage without automatic expiration.
 - **Bounded provider usage:** one scheduled poller, persisted request reservations and lookup limits protect the request budget.
-- **Verified deployments:** GitHub Actions checks pull requests. Merges to `main` trigger CodePipeline and CodeBuild, which check, publish and verify the homepage and ranking response. Infrastructure changes require a separate reviewed deployment.
+- **Verified deployments:** GitHub Actions checks pull requests. When deployed, the optional AWS pipeline publishes changes from `main` and verifies the homepage and ranking response. Infrastructure changes require a separate reviewed deployment.
 
 Built with Angular, TypeScript, Node.js and AWS CDK. [Explore the architecture](docs/architecture.md).
 

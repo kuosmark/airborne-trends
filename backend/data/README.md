@@ -23,9 +23,7 @@ conflicting nonempty registrations. Both files use the same attribution and lice
 ## Updates
 
 The backend packages the type names, classifications and the separate aircraft JSON file, so application use makes no reference-data requests.
-The GitHub Actions **Update aircraft reference** workflow runs on the first
-of each month at 07:23 UTC, or manually through **Run workflow**. Scheduling is
-best-effort and becomes active only after the workflow is merged into main.
+When enabled, the **Update aircraft reference** workflow is scheduled for 07:23 UTC on the first of each month. Maintainers can also start it from the Actions tab using **Run workflow**.
 
 It downloads the full export, imports names, classifications and aircraft identities, and rejects malformed entries,
 duplicate codes or ICAO24 addresses, a changed licence or removal of more than 5% of either reference.
