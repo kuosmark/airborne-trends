@@ -38,7 +38,7 @@ test('unchanged responses retain identity but metadata changes with the same tim
   const signal = new globalThis.AbortController().signal;
   let count = 0;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    assert.equal(url, '/api/ranking-v2');
+    assert.equal(url, 'api/ranking-v2');
     assert.equal(options.headers['If-None-Match'], count === 0 ? undefined : 'one');
     count++;
     if (count === 2) return new globalThis.Response(null, { status: 304 });
@@ -60,7 +60,7 @@ test('falls back during rollout then switches to compact data without reusing le
   let isPublished = false;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     assert.equal(options.headers['If-None-Match'], undefined);
-    if (url === '/api/ranking') return response(snapshot, 'legacy');
+    if (url === 'api/ranking') return response(snapshot, 'legacy');
     if (!isPublished) return new globalThis.Response(null, { status: 403 });
     return response(compactSnapshot(snapshot), 'compact');
   });

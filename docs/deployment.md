@@ -123,7 +123,9 @@ Deployments continue from `main`. Releases mark meaningful milestones rather tha
 
 Create an annotated Git tag such as `v0.1.0` on that verified commit and publish a GitHub release with concise notes describing the changes and any known limitations. Never move or reuse a published tag. While the application is in the `0.x` stage, increment the patch number for fixes (`v0.1.1`) and the minor number for substantial features (`v0.2.0`). Match `package.json` to the planned release version through a PR before deploying and tagging it.
 
-Tags do not trigger deployments or restore infrastructure, cached data or provider quota history. Recover application changes through the revert-and-release procedure above. No release branch or separate changelog is required.
+Publishing a regular GitHub release builds a standalone synthetic demo from its tag and deploys it to GitHub Pages. Set the Pages source to **GitHub Actions** and allow release tags in the `github-pages` environment's deployment rules. The workflow publishes only `dist/demo/browser`. After deployment, open the URL reported by the **Publish demo** workflow and check a ranking and a History chart. Link to that URL from the README once the first deployment succeeds.
+
+Tags do not trigger AWS deployments or restore infrastructure, cached data or provider quota history. Recover application changes through the revert-and-release procedure above. No release branch or separate changelog is required.
 
 ### Removing a deployment
 
