@@ -2,7 +2,9 @@
 
 [Back to overview](../README.md)
 
-## Run locally
+For the credential-free demo, follow the [README quick start](../README.md#try-the-local-demo).
+
+## Live development
 
 Requires Node.js 22.13+ (22.x) or 24.x. Reference updates and their tests require the `unzip` and `zip` command-line utilities (available on macOS and the Ubuntu GitHub Actions runner). Backend release packaging and its regression test still require Python 3. GitHub Actions uses Node.js 22.
 

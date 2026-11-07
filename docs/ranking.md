@@ -19,6 +19,8 @@ The Filters panel starts closed and retains its open/closed state when switching
 
 Search keeps a stable width when result counts change. Result counts and snapshot age sit above the ranking. The timestamp aligns right beside the counts when space permits and left below them when it wraps, consistently in both views. On desktop, Reset filters reserves its space when inactive; on mobile, the inactive button is removed to avoid an empty row.
 
+![Aircraft type and engine filters in the ranking](images/aircraft-types.png)
+
 ### Search and pagination
 
 The leaderboard initially displays 100 rows. A single “Show 100 more” button reveals the next batch, shows progress and disappears once all matching rows are visible.
