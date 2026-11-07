@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 const domainName = 'airlines.markuskuosmanen.com';
 
-export class AirlineRankingStack extends Stack {
+export class AirborneTrendsStack extends Stack {
   readonly website: s3.Bucket;
   readonly distribution: cloudfront.Distribution;
   readonly refresh: nodejs.NodejsFunction;

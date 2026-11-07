@@ -71,6 +71,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (history) { validateFunctionArn(history); }
   await releaseBackend(await packageBackend(), refresh);
   if (history) { await releaseBackend(await packageBackend(true), history); }
-  await publishWebsite('dist/airline-ranking/browser', website);
+  await publishWebsite('dist/airborne-trends/browser', website);
   console.log('Backend and frontend released. Infrastructure and polling settings were not changed.');
 }
