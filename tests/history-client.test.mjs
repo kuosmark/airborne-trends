@@ -48,3 +48,14 @@ test('year loader accepts validated daily summaries, handles old deployments, an
   fetchMock.mock.mockImplementation(async()=>globalThis.Response.json({schemaVersion:1,generatedAt:index.generatedAt,daily:[null]}));
   await assert.rejects(loadHistoryYear(new globalThis.AbortController().signal));
 });
+
+test('one failed day leaves validated observations available', async context => {
+  context.mock.method(globalThis, 'fetch', async path => {
+    if (path.endsWith('/index.json')) return globalThis.Response.json(index);
+    if (path.endsWith('/2026-10-28.json')) return new globalThis.Response('', { status: 503 });
+    return globalThis.Response.json(day);
+  });
+  const result = await loadHistory(7, new globalThis.AbortController().signal, now);
+  assert.deepEqual(result.days, [day]);
+  assert.deepEqual(result.failedDates, ['2026-10-28']);
+});

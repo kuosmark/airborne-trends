@@ -24,7 +24,10 @@
         </div>
       } @else if (points().length === 0) {
         <div class="chart-surface history-surface history-placeholder">
-        <p>{{ rawPoints().length ? "Not enough coverage to show reliable averages for this period." : "No observations available for this period yet." }}</p>
+        @if (hasMissingDays()) {
+          <p role="status">Some history could not be loaded.</p>
+          <button class="retry" type="button" [disabled]="isLoading()" (click)="load()">Try again</button>
+        } @else { <p>{{ rawPoints().length ? "Not enough coverage to show reliable averages for this period." : "No observations available for this period yet." }}</p> }
         </div>
       } @else {
         <div class="chart-surface history-surface">
@@ -65,11 +68,15 @@
         </div>
         </div>
         <details class="values">
-        <summary>Data details@if (hasCoverageNotice() || availableSince()) { <span class="coverage-hint"> · Limited coverage</span> }</summary>
+        <summary>Data details@if (hasMissingDays() || hasCoverageNotice() || availableSince()) { <span class="coverage-hint"> · Limited coverage</span> }</summary>
+        @if (hasMissingDays()) {
+          <p role="status">Some history could not be loaded.</p>
+          <button class="retry" type="button" [disabled]="isLoading()" (click)="load()">Try again</button>
+        }
         <div class="details-meta">
           <span>{{ points().length }} {{ period() === 1 ? 'observations' : 'averages' }}@if (!isDemo) { · Updated {{ updatedAge() }} }</span>
           <span>{{ period() >= 30 ? 'UTC days' : timezone }} · Gaps indicate {{ period() === 1 ? 'missing data' : 'insufficient coverage' }}.</span>
-          @if (availableSince(); as first) { <span>Available since {{ first | date: 'd MMM': dateTimezone() }}.</span> }
+          @if (hasMissingDays() ? null : availableSince(); as first) { <span>Available since {{ first | date: 'd MMM': dateTimezone() }}.</span> }
         </div>
           <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="name() + ' observations'">
             <table [attr.aria-label]="name() + (period() === 1 ? ' observed airborne aircraft' : ' average observed airborne aircraft')">

@@ -5,19 +5,27 @@ async function readJson(path: string, signal: AbortSignal): Promise<unknown> {
   if (!response.ok) { throw new Error('History unavailable'); }
   return response.json() as Promise<unknown>;
 }
-export async function loadHistory(days: number, signal: AbortSignal, now: number | null = Date.now()): Promise<{ index: HistoryIndex; days: HistoryDay[] }> {
+export async function loadHistory(days: number, signal: AbortSignal, now: number | null = Date.now()): Promise<{ index: HistoryIndex; days: HistoryDay[]; failedDates: string[] }> {
   const index = await readJson('/api/history/v1/index.json', signal);
   if (!isHistoryIndex(index)) { throw new Error('Invalid history index'); }
   const until = now ?? Date.parse(index.generatedAt);
   const firstDate = new Date(until - days * DAY_MS).toISOString().slice(0, 10);
   const lastDate = new Date(until).toISOString().slice(0, 10);
   const dates = index.days.filter(date => date >= firstDate && date <= lastDate);
-  const data = await Promise.all(dates.map(async date => {
+  const results = await Promise.allSettled(dates.map(async date => {
     const day = await readJson(`/api/history/v1/${date}.json`, signal);
     if (!isHistoryDay(day) || day.date !== date) { throw new Error('Invalid history day'); }
     return day;
   }));
-  return { index, days: data };
+  if (signal.aborted && !(signal.reason instanceof DOMException && signal.reason.name === 'TimeoutError')) { signal.throwIfAborted(); }
+  const loaded: HistoryDay[] = [];
+  const failedDates: string[] = [];
+  results.forEach((result, position) => {
+    if (result.status === 'fulfilled') { loaded.push(result.value); }
+    else { failedDates.push(dates[position]); }
+  });
+  if (!loaded.length && failedDates.length) { throw new Error('History unavailable'); }
+  return { index, days: loaded, failedDates };
 }
 
 export async function loadHistoryYear(signal: AbortSignal): Promise<HistoryYear | null> {
