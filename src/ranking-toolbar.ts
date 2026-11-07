@@ -1,6 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 
+import { isDemo } from './demo-mode';
+
 @Component({
   selector: 'app-ranking-toolbar',
   standalone: true,
@@ -10,6 +12,7 @@ import { ChangeDetectionStrategy, Component, input, output, signal } from '@angu
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RankingToolbarComponent {
+  readonly isDemo = isDemo;
   readonly isFiltersOpen = signal(false);
   readonly activeFilterCount = input(0);
   readonly filterSummary = input('All aircraft · Any engine count');

@@ -51,7 +51,7 @@ Run `npm run check` before committing. GitHub Actions runs the same command plus
 | `npm run infra:publish -- cdk.out/outputs.json` | Upload the frontend and wait for CloudFront cache invalidation |
 | `npm run infra:release -- BUCKET DISTRIBUTION FUNCTION_ARN [HISTORY_FUNCTION_ARN]` | Update the existing Lambda code and publish the frontend; requires Python 3 for ZIP packaging |
 
-The browser regression uses Playwright and synthetic API responses; it starts its own frontend on port 4317 without a backend or provider requests. Install Chromium once with `npx playwright install chromium` (on Linux CI, use `--with-deps`), then run `npm run test:browser`. Close anything using port 4317 first. Browser checks run separately from `npm run check`, so the deployment build does not need a browser installation.
+Playwright starts a frontend with synthetic API responses on port 4317 and the generated local demo on port 4318. Neither uses a backend or provider credentials. Install Chromium once with `npx playwright install chromium` (on Linux CI, use `--with-deps`), then run `npm run test:browser`. Both ports must be free. Browser checks run separately from `npm run check`, so the deployment build does not need a browser installation.
 
 Other tests use Node's built-in test runner and synthetic data. They do not require an API key or contact either provider. Lint warnings fail the check. TypeScript rules prohibit unnecessary `else` branches after returns and shadowed names, and limit nesting to four levels. Drawer layout, responsive spacing and animations are checked manually in the browser; the unit tests do not verify their appearance.
 

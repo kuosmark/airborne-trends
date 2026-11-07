@@ -7,11 +7,14 @@ import { formatSnapshotAge } from './snapshot-age';
 import { historyTicks } from './history-ticks';
 import { nearestHistoryPoint, plotHistory } from './history-plot';
 
+import { isDemo } from './demo-mode';
+
 @Component({
   selector: 'app-history-chart', standalone: true, imports: [DatePipe, DecimalPipe],
   templateUrl: './history-chart.html', styleUrls: ['./chart-surface.css', './history-chart.css', './drawer-section.css'], changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HistoryChartComponent implements OnDestroy {
+  readonly isDemo = isDemo;
   readonly dimension = input<'total' | 'operators' | 'aircraftTypes'>('total');
   readonly groupId = input('');
   readonly name = input('All aircraft');
@@ -63,7 +66,7 @@ export class HistoryChartComponent implements OnDestroy {
     return Math.max(0, ...points.map(point => point.count), ...daily.map(point => point.count));
   });
   readonly plot = computed(() => plotHistory(this.points(), this.since(), this.until(), this.referenceMaximum(), this.interval()));
-  readonly isDelayed = computed(() => !!this.activeGeneratedAt() && this.now() - Date.parse(this.activeGeneratedAt()) > 2 * 60 * 60_000);
+  readonly isDelayed = computed(() => !isDemo && !!this.activeGeneratedAt() && this.now() - Date.parse(this.activeGeneratedAt()) > 2 * 60 * 60_000);
   readonly hoveredIndex = signal<number | null>(null);
   readonly hoveredPoint = computed(() => {
     const index = this.hoveredIndex();
@@ -130,14 +133,14 @@ export class HistoryChartComponent implements OnDestroy {
         if (abort.signal.aborted) { return; }
         if (year) {
           this.year.set(year);
-          this.yearUntil.set(requestUntil);
+          this.yearUntil.set(isDemo ? Date.parse(year.generatedAt) : requestUntil);
         }
         this.isYearError.set(year === null);
         this.isYearLoading.set(false);
       });
-      const result = await loadHistory(30, requestSignal, requestUntil);
+      const result = await loadHistory(30, requestSignal, isDemo ? null : requestUntil);
       if (!abort.signal.aborted) {
-        this.recentUntil.set(requestUntil);
+        this.recentUntil.set(isDemo ? Date.parse(result.index.generatedAt) : requestUntil);
         this.days.set(result.days);
         this.generatedAt.set(result.index.generatedAt);
       }

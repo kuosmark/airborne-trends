@@ -9,7 +9,7 @@ import { formatSnapshotAge } from './snapshot-age';
 import { HistoryChartComponent } from './history-chart';
 import { RankingBoardComponent } from './ranking-board';
 
-declare const IS_DEMO: boolean;
+import { isDemo } from './demo-mode';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +20,7 @@ declare const IS_DEMO: boolean;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit, OnDestroy {
-  readonly isDemo = typeof IS_DEMO !== 'undefined' && IS_DEMO;
+  readonly isDemo = isDemo;
   private readonly abort = new AbortController();
   private readonly fetchRanking = createRankingClient();
   private stopPolling?: () => void;
@@ -33,7 +33,7 @@ export class AppComponent implements OnInit, OnDestroy {
   });
   readonly isRankingStale = computed(() => {
     const snapshot = this.snapshot();
-    return snapshot ? isSnapshotStale(snapshot, this.now()) : false;
+    return snapshot && !isDemo ? isSnapshotStale(snapshot, this.now()) : false;
   });
   readonly error = signal<string | null>(null);
 

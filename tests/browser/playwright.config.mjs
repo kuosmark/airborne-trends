@@ -6,14 +6,21 @@ export default defineConfig({
   forbidOnly: true,
   workers: 1,
   use: { baseURL: 'http://127.0.0.1:4317', browserName: 'chromium' },
-  projects: [320, 390, 1280].map(width => ({
-    name: `chromium-${width}`,
+  projects: [...[320, 390, 1280].map(width => ({
+    name: `chromium-${width}`, testIgnore: 'demo.spec.mjs',
     use: { viewport: { width, height: 900 } },
-  })),
-  webServer: {
+  })), {
+    name: 'demo', testMatch: 'demo.spec.mjs', use: { baseURL: 'http://127.0.0.1:4318' },
+  }],
+  webServer: [{
     command: 'npm start -- --port 4317',
     url: 'http://127.0.0.1:4317',
     reuseExistingServer: false,
     timeout: 120_000,
-  },
+  }, {
+    command: 'npm run demo -- --port 4318',
+    url: 'http://127.0.0.1:4318',
+    reuseExistingServer: false,
+    timeout: 120_000,
+  }],
 });

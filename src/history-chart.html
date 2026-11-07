@@ -67,7 +67,7 @@
         <details class="values">
         <summary>Data details@if (hasCoverageNotice() || availableSince()) { <span class="coverage-hint"> · Limited coverage</span> }</summary>
         <div class="details-meta">
-          <span>{{ points().length }} {{ period() === 1 ? 'observations' : 'averages' }} · Updated {{ updatedAge() }}</span>
+          <span>{{ points().length }} {{ period() === 1 ? 'observations' : 'averages' }}@if (!isDemo) { · Updated {{ updatedAge() }} }</span>
           <span>{{ period() >= 30 ? 'UTC days' : timezone }} · Gaps indicate {{ period() === 1 ? 'missing data' : 'insufficient coverage' }}.</span>
           @if (availableSince(); as first) { <span>Available since {{ first | date: 'd MMM': dateTimezone() }}.</span> }
         </div>
