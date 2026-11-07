@@ -3,11 +3,11 @@ import { AirborneTrendsStack } from './stack.ts';
 import { DeploymentStack } from './deployment-stack.ts';
 
 const app = new App();
-const application = new AirborneTrendsStack(app, 'AirlineRanking', {
+const application = new AirborneTrendsStack(app, 'AirborneTrends', {
   env: { account: process.env['CDK_DEFAULT_ACCOUNT'], region: 'eu-north-1' },
   terminationProtection: true,
 });
-new DeploymentStack(app, 'AirlineRankingDeployment', {
+new DeploymentStack(app, 'AirborneTrendsDeployment', {
   env: application.env,
   website: application.website,
   distribution: application.distribution,

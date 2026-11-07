@@ -20,7 +20,7 @@ import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { fileURLToPath } from 'node:url';
 
-const domainName = 'airlines.markuskuosmanen.com';
+const domainName = 'airborne-trends.markuskuosmanen.com';
 
 export class AirborneTrendsStack extends Stack {
   readonly website: s3.Bucket;
@@ -42,7 +42,7 @@ export class AirborneTrendsStack extends Stack {
     });
     const certificateArn = new CfnParameter(this, 'CertificateArn', {
       type: 'String',
-      description: 'Issued, non-exportable ACM certificate for airlines.markuskuosmanen.com in us-east-1.',
+      description: 'Issued, non-exportable ACM certificate for airborne-trends.markuskuosmanen.com in us-east-1.',
       allowedPattern: 'arn:aws:acm:us-east-1:[0-9]{12}:certificate/[a-f0-9-]+',
     });
     const hostedZoneId = new CfnParameter(this, 'HostedZoneId', {
@@ -149,7 +149,7 @@ export class AirborneTrendsStack extends Stack {
         STATE_BUCKET: state.bucketName,
         IS_HISTORY_ENABLED: 'true',
         WEBSITE_BUCKET: this.website.bucketName,
-        SKYLINK_KEY_PARAMETER: '/airline-ranking/skylink-api-key',
+        SKYLINK_KEY_PARAMETER: '/airborne-trends/skylink-api-key',
       },
     });
     // Only these objects may be read/written; the poller cannot delete cache history or website files.
@@ -167,7 +167,7 @@ export class AirborneTrendsStack extends Stack {
       conditions: { StringEquals: { 's3:if-none-match': '*' } },
     }));
     const apiKey = ssm.StringParameter.fromSecureStringParameterAttributes(this, 'ApiKey', {
-      parameterName: '/airline-ranking/skylink-api-key',
+      parameterName: '/airborne-trends/skylink-api-key',
     });
     refresh.addToRolePolicy(new iam.PolicyStatement({
       actions: ['ssm:GetParameter'],

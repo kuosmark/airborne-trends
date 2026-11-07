@@ -25,7 +25,7 @@ test('polling starts disabled with bounded concurrency, execution time and no au
   template.hasResourceProperties('AWS::Lambda::Function', {
     Runtime: 'nodejs22.x', Architectures: ['arm64'], MemorySize: 512,
     Timeout: 120, ReservedConcurrentExecutions: 1,
-    Environment: { Variables: Match.objectLike({ SKYLINK_KEY_PARAMETER: '/airline-ranking/skylink-api-key' }) },
+    Environment: { Variables: Match.objectLike({ SKYLINK_KEY_PARAMETER: '/airborne-trends/skylink-api-key' }) },
   });
   template.hasResourceProperties('AWS::Lambda::EventInvokeConfig', {
     MaximumRetryAttempts: 0, MaximumEventAgeInSeconds: 60,
@@ -70,13 +70,13 @@ test('custom domain reuses the existing zone and certificate with a CloudFront a
   template.resourceCountIs('AWS::CertificateManager::Certificate', 0);
   template.resourceCountIs('AWS::Route53::RecordSet', 1);
   template.hasResourceProperties('AWS::Route53::RecordSet', {
-    HostedZoneId: { Ref: 'HostedZoneId' }, Name: 'airlines.markuskuosmanen.com.', Type: 'A',
+    HostedZoneId: { Ref: 'HostedZoneId' }, Name: 'airborne-trends.markuskuosmanen.com.', Type: 'A',
     AliasTarget: Match.objectLike({ DNSName: { 'Fn::GetAtt': [Match.stringLikeRegexp('^Distribution'), 'DomainName'] } }),
   });
   assert.match(JSON.stringify(template.toJSON().Mappings), /Z2FDTNDATAQYW2/);
   template.hasResourceProperties('AWS::CloudFront::Distribution', {
     DistributionConfig: Match.objectLike({
-      Aliases: ['airlines.markuskuosmanen.com'],
+      Aliases: ['airborne-trends.markuskuosmanen.com'],
       ViewerCertificate: {
         AcmCertificateArn: { Ref: 'CertificateArn' }, MinimumProtocolVersion: 'TLSv1.2_2021', SslSupportMethod: 'sni-only',
       },
